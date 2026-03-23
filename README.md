@@ -7,3 +7,4 @@ The system supports workflows for patient registration, disease case logging, la
 testing, outbreak monitoring, compliance tracking, and reporting. It ensures transparency and 
 accountability by maintaining audit trails, dashboards, and performance metrics across public 
 health operations.
+Updated ruleset

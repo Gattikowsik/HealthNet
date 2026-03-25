@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Project\HealthNetDb.Domain\HealthNetDb\HealthNetDb\HealthNetDb.csproj" />
+    <ProjectReference Include="..\HealthNetDb\HealthNetDb.csproj" />
   </ItemGroup>
 
 </Project>

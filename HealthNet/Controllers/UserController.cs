@@ -1,3 +1,4 @@
+using HealthNet.DTOs.UserDTO;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
@@ -27,15 +28,17 @@ namespace HealthNet.Controllers
             _userService = userService;
         }
 
-        //Jwt Token Generation
-        // <summary>
-        // GenerateJwtToken for generating the token
-        // </summary>
-        // <param name="user">user object for DB communication </param>
-        private string GenerateJwtToken(Users user)
+        [HttpPost]
+        public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequest request)
         {
-            string token = _userService.GenerateJwtTokenService(user, _configuration);
-            return token;
+            var loginResult = await _userService.LoginServiceAsync(request, _context, _configuration);
+
+            if (!loginResult.Success)
+            {
+                return Unauthorized(new { error = loginResult.ErrorMessage });
+            }
+
+            return Ok(new { token = loginResult.Token });
         }
     }
 }

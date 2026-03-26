@@ -4,7 +4,6 @@ using System.Text;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using HealthNet.DTOs.UserDTO;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -12,7 +11,12 @@ namespace HealthNet.Services.UserServices;
 
 public class UserService : IUserService
 {
-    public string GenerateJwtTokenService(Users user, IConfiguration _config)
+    //Jwt Token Generation
+    // <summary>
+    // GenerateJwtToken for generating the token
+    // </summary>
+    // <param name="user">user object for DB communication </param>
+    public async Task<string> GenerateJwtTokenServiceAsync(Users user, IConfiguration _config)
     {
         // Jwt token variables
         var secretKey = _config["JwtSettings:SecretKey"];
@@ -43,6 +47,47 @@ public class UserService : IUserService
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);        //Token Generated with Paylaod
+        return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));        //Token Generated with Paylaod
+    }
+
+    // Login Service
+    public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
+    {
+        // Check whether email and password are non empty fields
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorMessage = "Email and Password are required."
+            };
+        }
+        // Validate the Email
+        Users? user = await _context.Userss.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null)
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorMessage = "User not found."
+            };
+        }
+        // Validate the password
+        bool isPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+        if (!isPassword)
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorMessage = "Invalid Password."
+            };
+        }
+        // Generate token
+        var token = await GenerateJwtTokenServiceAsync(user, _config);
+        return new LoginResult
+        {
+            Success = true,
+            Token = token,
+        };
     }
 }

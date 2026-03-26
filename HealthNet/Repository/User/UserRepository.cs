@@ -1,13 +1,13 @@
 using System;
 using HealthNetDb.Data;
 
-namespace HealthNet.Repository.UserRepository;
+namespace HealthNet.Repository.User;
 
-public class User
+public class UserRepository
 {
     private readonly HealthNetContext _context;
 
-    public User(HealthNetContext context)
+    public UserRepository(HealthNetContext context)
     {
         _context = context;
     }

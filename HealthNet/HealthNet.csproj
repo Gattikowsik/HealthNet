@@ -7,19 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Controllers\" />
-    <Folder Include="DTOs\" />
     <Folder Include="Repository\" />
+    <Folder Include="Repository\UserRepository\" />
     <Folder Include="Services\" />
+    <Folder Include="Services\UserServices\" />
     <Folder Include="Utility\" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Project\HealthNetDb.Domain\HealthNetDb\HealthNetDb\HealthNetDb.csproj" />
+    <ProjectReference Include="..\HealthNetDb\HealthNetDb.csproj" />
   </ItemGroup>
 
 </Project>

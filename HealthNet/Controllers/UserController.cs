@@ -28,7 +28,13 @@ namespace HealthNet.Controllers
             _userService = userService;
         }
 
+        // <summary>
+        // LoginAsync for User login
+        // </summary>
+        // <param name="request"> User Login Request DTO for secured data Transfer from client </param>
         [HttpPost]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequest request)
         {
             var loginResult = await _userService.LoginServiceAsync(request, _context, _configuration);

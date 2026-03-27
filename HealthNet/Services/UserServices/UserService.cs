@@ -16,7 +16,7 @@ public class UserService : IUserService
     // GenerateJwtToken for generating the token
     // </summary>
     // <param name="user">user object for DB communication </param>
-    public async Task<string> GenerateJwtTokenServiceAsync(Users user, IConfiguration _config)
+    private async Task<string> GenerateJwtTokenServiceAsync(Users user, IConfiguration _config)
     {
         // Jwt token variables
         var secretKey = _config["JwtSettings:SecretKey"];
@@ -54,7 +54,7 @@ public class UserService : IUserService
     public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
     {
         // Check whether email and password are non empty fields
-        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         {
             return new LoginResult
             {

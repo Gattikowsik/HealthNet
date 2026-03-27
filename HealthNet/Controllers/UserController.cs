@@ -1,3 +1,4 @@
+using System.Net;
 using HealthNet.DTOs.UserDTO;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
@@ -33,8 +34,8 @@ namespace HealthNet.Controllers
         // </summary>
         // <param name="request"> User Login Request DTO for secured data Transfer from client </param>
         [HttpPost]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequest request)
         {
             var loginResult = await _userService.LoginServiceAsync(request, _context, _configuration);

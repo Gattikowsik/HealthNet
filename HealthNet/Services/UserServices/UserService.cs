@@ -11,6 +11,47 @@ namespace HealthNet.Services.UserServices;
 
 public class UserService : IUserService
 {
+    // Login Service
+    public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
+    {
+        // Check whether email and password are non empty fields
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorMessage = "Email and Password are required."
+            };
+        }
+        // Validate the Email and user status
+        Users? user = await _context.Userss.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null || !user.Status)
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorMessage = "No active account found with the provided email address."
+            };
+        }
+        // Validate the password
+        bool isPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+        if (!isPassword)
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorMessage = "Invalid Password."
+            };
+        }
+        // Generate token
+        var token = await GenerateJwtTokenServiceAsync(user, _config);
+        return new LoginResult
+        {
+            Success = true,
+            Token = token,
+        };
+    }
+
     //Jwt Token Generation
     // <summary>
     // GenerateJwtToken for generating the token
@@ -18,6 +59,7 @@ public class UserService : IUserService
     // <param name="user">user object for DB communication </param>
     private async Task<string> GenerateJwtTokenServiceAsync(Users user, IConfiguration _config)
     {
+
         // Jwt token variables
         var secretKey = _config["JwtSettings:SecretKey"];
         if (string.IsNullOrWhiteSpace(secretKey))
@@ -48,46 +90,5 @@ public class UserService : IUserService
         );
 
         return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));        //Token Generated with Paylaod
-    }
-
-    // Login Service
-    public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
-    {
-        // Check whether email and password are non empty fields
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-        {
-            return new LoginResult
-            {
-                Success = false,
-                ErrorMessage = "Email and Password are required."
-            };
-        }
-        // Validate the Email
-        Users? user = await _context.Userss.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (user == null)
-        {
-            return new LoginResult
-            {
-                Success = false,
-                ErrorMessage = "User not found."
-            };
-        }
-        // Validate the password
-        bool isPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
-        if (!isPassword)
-        {
-            return new LoginResult
-            {
-                Success = false,
-                ErrorMessage = "Invalid Password."
-            };
-        }
-        // Generate token
-        var token = await GenerateJwtTokenServiceAsync(user, _config);
-        return new LoginResult
-        {
-            Success = true,
-            Token = token,
-        };
     }
 }

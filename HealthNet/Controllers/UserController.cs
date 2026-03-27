@@ -1,4 +1,5 @@
 using System.Net;
+using HealthNet.DTOs;
 using HealthNet.DTOs.UserDTO;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
@@ -46,6 +47,32 @@ namespace HealthNet.Controllers
             }
 
             return Ok(new { token = loginResult.Token });
+        }
+
+        // <summary>
+        // Register method for new user
+        // </summary>
+        /// <param name="user">The user registration data transfer object containing credentials and profile info.</param>
+        /// <returns>An IActionResult containing the registration response or an error message.</returns>
+        [HttpPost("register")]
+        [ProducesResponseType(typeof(UserRegisterResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Register([FromBody] UserRegisterRequestDto request)
+        {
+            try{
+                // Validate Model State
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+            var result = await _userService.RegisterUser(request);
+            return Ok(result);
+        }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

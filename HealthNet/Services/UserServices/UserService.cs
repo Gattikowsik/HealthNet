@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using HealthNet.DTOs;
 using HealthNet.Repository.User;
+using System.Text.RegularExpressions;
+using HealthNet.Utility;
 
 namespace HealthNet.Services.UserServices;
 
@@ -120,5 +122,60 @@ public class UserService : IUserService
 
             return await _repository.RegisterUser(request);
         }
+
+
+    //Forgot Password Functionality
+    // <summary>
+    // ResetPasswordAsync for resetting the user's password
+    // </summary>
+    // <param name="dto">ForgotPasswordDto object containing the reset password details </param>
+    public async Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto)
+    {
+        try
+        {   
+            // Steps for verification of new password
+            if (dto.NewPassword != dto.ConfirmPassword)
+            {
+                return (false, ForgotPasswordHelper.PasswordsDoNotMatch); 
+            }
+            // Validate Password Strength
+            if (!IsValidPassword(dto.NewPassword))
+            {
+                return (false, ForgotPasswordHelper.InvalidPassword);
+            }
+
+            //Get the user by email from the repo
+            var user = await _repository.GetUserByEmailAsync(dto.Email);
+            if (user == null)
+            {
+                return (false, ForgotPasswordHelper.UserNotFound); // User doesn't exist
+            }
+
+            // Implementing the BCrypt hashing algorithm 
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.Password = hashedPassword;
+
+            // Update the user in the database
+            await _repository.UpdateUserAsync(user);
+
+            return (true, ForgotPasswordHelper.PasswordUpdatedSuccess);
+        }
+        catch 
+        {
+            // Return the error message to the controller
+            return (false, ForgotPasswordHelper.GenericError); 
+        }
     }
+
+    public bool IsValidPassword(string password)
+    {
+        if (string.IsNullOrEmpty(password) )
+            return false;
+
+        var pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$";
+        return Regex.IsMatch(password, pattern);
+    }
+
+
+}
 

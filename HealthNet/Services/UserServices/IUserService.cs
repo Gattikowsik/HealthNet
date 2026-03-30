@@ -10,4 +10,5 @@ public interface IUserService
 {
     Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config);
     Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request);
+    Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto);
 }

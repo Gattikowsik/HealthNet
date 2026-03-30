@@ -1,9 +1,10 @@
 using System;
+using HealthNet.DTOs;
 using HealthNetDb.Data;
-
+using Microsoft.EntityFrameworkCore;
 namespace HealthNet.Repository.User;
 
-public class UserRepository
+public class UserRepository : IUserRepository
 {
     private readonly HealthNetContext _context;
 
@@ -11,4 +12,43 @@ public class UserRepository
     {
         _context = context;
     }
+    /// <summary>
+        /// Handles the database logic for registering a user, including email uniqueness checks and persistence.
+        /// </summary>
+        /// <param name="request">The registration request containing user details.</param>
+        /// <returns>A response DTO containing the mapped details of the newly created user.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the request object is null.</exception>
+    public async Task<UserRegisterResponseDto> RegisterUser(
+            UserRegisterRequestDto request)
+        {
+            // Email check 
+            if (await _context.Userss
+                .AnyAsync(u => u.Email == request.Email))
+            {
+                throw new InvalidOperationException("Email already exists");
+            }
+
+            // FETCH ROLE FROM DATABASE
+            var role = await _context.Roles
+                .SingleOrDefaultAsync(r => r.RoleName == request.RoleName);
+
+            if (role == null)
+            {
+                throw new ArgumentException(
+                    $"Invalid role name: {request.RoleName}");
+            }
+
+            var user = request.ToUserEntity();
+            user.RoleId = role.RoleId;
+            user.Status = true;
+
+            _context.Userss.Add(user);
+            await _context.SaveChangesAsync();
+
+            await _context.Entry(user)
+                .Reference(u => u.RoleNavigation)
+                .LoadAsync();
+            return user.ToUserRegisterResponse();
+     }
 }
+

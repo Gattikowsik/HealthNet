@@ -46,9 +46,7 @@ public class UserRepository : IUserRepository
             _context.Userss.Add(user);
             await _context.SaveChangesAsync();
 
-            await _context.Entry(user)
-                .Reference(u => u.RoleNavigation)
-                .LoadAsync();
+            await _context.Entry(user).Reference(u => u.RoleNavigation).LoadAsync();
             return user.ToUserRegisterResponse();
      }
     /// <summary>
@@ -64,8 +62,8 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateUserAsync(Users user)
     {
-         _context.Userss.Update(user);
-            await _context.SaveChangesAsync();
+        _context.Userss.Update(user);
+        await _context.SaveChangesAsync();
     }
 }
 

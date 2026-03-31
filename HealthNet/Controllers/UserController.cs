@@ -1,6 +1,8 @@
 using System.Net;
+using HealthNet.DTOs;
 using HealthNet.DTOs.UserDTO;
 using HealthNet.Services.UserServices;
+using HealthNet.Utility;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -48,11 +50,70 @@ namespace HealthNet.Controllers
 
             return Ok(new { token = loginResult.Token });
         }
+
+        // <summary>
+        // Register method for new user
+        // </summary>
+        /// <param name="user">The user registration data transfer object containing credentials and profile info.</param>
+        /// <returns>An IActionResult containing the registration response or an error message.</returns>
+        [HttpPost("register")]
+        [ProducesResponseType(typeof(UserRegisterResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Register([FromBody] UserRegisterRequestDto request)
+        {
+            try
+            {
+                // Validate Model State
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var result = await _userService.RegisterUser(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // <summary>
+        // ForgotPassword method for resetting the password of the user
+        // </summary>
+        /// <param name="request">The forgot password data transfer object containing the email and new password.</param>
+        /// <returns>An IActionResult indicating the success or failure of the password reset operation.</returns>
+        [HttpPost("forgotpassword")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return BadRequest(ForgotPasswordHelper.InvalidPassword);
+                }
+                // Call the service to do the actual work
+                var (success, message) = await _userService.ResetPasswordAsync(request);
+
+                // User doesn't exist
+                if (!success)
+                {
+                    return BadRequest(message);
+                }
+
+                return Ok(new { message });
+            }
+            catch
+            {
+                // Handle exception if any 
+                return StatusCode(500, ForgotPasswordHelper.GenericError);
+            }
+        }
         /// <summary>
         /// Retrieves all users in the system regardless of their status.
-        /// Accessible only by Admin role.
-        /// Returns both active (Status = true) and inactive (Status = false) users
-        /// along with their respective role information.
         /// Route: GET /api/v1/user/GetAll
         /// </summary>
         /// <returns>

@@ -64,6 +64,9 @@ coverage/
 Thumbs.db
 Desktop.ini
 
-HealthNetDb/Migrations
-HealthNet/appsettings.Development.json
-HealthNet/appsettings.json
+# EF Core safe ignores
+efcore.design.*
+**/Migrations/
+
+appsettings.json
+appsettings.*.json

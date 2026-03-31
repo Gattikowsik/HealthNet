@@ -4,24 +4,27 @@ using System.Text;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using HealthNet.DTOs.UserDTO;
+using HealthNet.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using HealthNet.DTOs;
 using HealthNet.Repository.User;
+using System.Text.RegularExpressions;
+using HealthNet.Utility;
 
 namespace HealthNet.Services.UserServices;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IUserRepository _repository;
     /// <summary>
-    /// Constructor for UserService, injects IUserRepository for data access.
+    /// Constructor for UserService, injects IUserRepository for data access and business logic separation.
     /// </summary>
-    /// <param name="userRepository">The user repository used to access user data.</param>
-    public UserService(IUserRepository userRepository)
-    {
-        _userRepository = userRepository;
-    }
-
+    /// <param name="repository">The user repository instance for data access.</param>
+        public UserService(IUserRepository repository)
+        {
+            _repository = repository;
+        }
     // Login Service
     public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
     {
@@ -103,13 +106,86 @@ public class UserService : IUserService
         return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));        //Token Generated with Paylaod
     }
 
+    //Register a User
+    public async Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) ||                 //Validating the user details 
+                string.IsNullOrWhiteSpace(request.Password) ||
+                string.IsNullOrWhiteSpace(request.ConfirmPassword) ||
+                string.IsNullOrWhiteSpace(request.RoleName))
+            {
+                throw new ArgumentException("Invalid input");
+            }
+            if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
+            {
+                throw new ArgumentException("Passwords do not match");
+            }
+            request.Password =
+                BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
+
+            return await _repository.RegisterUser(request);
+        }
+
+
+    //Forgot Password Functionality
+    // <summary>
+    // ResetPasswordAsync for resetting the user's password
+    // </summary>
+    // <param name="dto">ForgotPasswordDto object containing the reset password details </param>
+    public async Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto)
+    {
+        try
+        {   
+            // Steps for verification of new password
+            if (dto.NewPassword != dto.ConfirmPassword)
+            {
+                return (false, ForgotPasswordHelper.PasswordsDoNotMatch); 
+            }
+            // Validate Password Strength
+            if (!IsValidPassword(dto.NewPassword))
+            {
+                return (false, ForgotPasswordHelper.InvalidPassword);
+            }
+
+            //Get the user by email from the repo
+            var user = await _repository.GetUserByEmailAsync(dto.Email);
+            if (user == null)
+            {
+                return (false, ForgotPasswordHelper.UserNotFound); // User doesn't exist
+            }
+
+            // Implementing the BCrypt hashing algorithm 
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.Password = hashedPassword;
+
+            // Update the user in the database
+            await _repository.UpdateUserAsync(user);
+
+            return (true, ForgotPasswordHelper.PasswordUpdatedSuccess);
+        }
+        catch 
+        {
+            // Return the error message to the controller
+            return (false, ForgotPasswordHelper.GenericError); 
+        }
+    }
+
+    public bool IsValidPassword(string password)
+    {
+        if (string.IsNullOrEmpty(password) )
+            return false;
+
+        var pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$";
+        return Regex.IsMatch(password, pattern);
+    }
+
     // Get All Users Service
     public async Task<IEnumerable<UserResponse>> GetAllUsersAsync()
     {
         try
         {
             // Fetch users from the repository
-            var users = await _userRepository.GetAllUsersAsync();
+            var users = await _repository.GetAllUsersAsync();
 
             // Map Users entities to UserResponse DTOs
             return users.Select(u => new UserResponse

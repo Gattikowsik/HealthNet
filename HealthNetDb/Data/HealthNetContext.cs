@@ -24,6 +24,14 @@ public class HealthNetContext : DbContext
     public virtual DbSet<SymptomReport> SymptomReports { get; set; }
     public virtual DbSet<Users> Userss { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer("default connection string");
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

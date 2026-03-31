@@ -63,3 +63,7 @@ coverage/
 # Others
 Thumbs.db
 Desktop.ini
+
+HealthNetDb/Migrations
+HealthNet/appsettings.Development.json
+HealthNet/appsettings.json

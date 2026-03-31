@@ -17,6 +17,10 @@ namespace HealthNet.Services.UserServices;
 public class UserService : IUserService
 {
     private readonly IUserRepository _repository;
+    /// <summary>
+    /// Constructor for UserService, injects IUserRepository for data access and business logic separation.
+    /// </summary>
+    /// <param name="repository">The user repository instance for data access.</param>
 
         public UserService(IUserRepository repository)
         {
@@ -35,7 +39,7 @@ public class UserService : IUserService
             };
         }
         // Validate the Email and user status
-        Users? user = await _context.Userss.FirstOrDefaultAsync(u => u.Email == request.Email);
+        Users? user = await _context.Userss.Include(u => u.RoleNavigation).FirstOrDefaultAsync(u => u.Email == request.Email);
         if (user == null || !user.Status)
         {
             return new LoginResult
@@ -176,6 +180,29 @@ public class UserService : IUserService
         return Regex.IsMatch(password, pattern);
     }
 
+    // Get All Users Service
+    public async Task<IEnumerable<UserResponse>> GetAllUsersAsync()
+    {
+        try
+        {
+            // Fetch users from the repository
+            var users = await _repository.GetAllUsersAsync();
 
+            // Map Users entities to UserResponse DTOs
+            return users.Select(u => new UserResponse
+            {
+                UserId = u.UserId,
+                Name = u.Name,
+                Email = u.Email,
+                Phone = u.Phone,
+                Status = u.Status,
+                RoleName = u.RoleNavigation?.RoleName ?? "Unknown"
+            });
+        }
+        catch (Exception ex)
+        {
+            // If mapping or repository call fails, throw with a clear message
+            throw new HealthNetException($"An error occurred while processing the user list. {ex.Message}");
+        }
+    }
 }
-

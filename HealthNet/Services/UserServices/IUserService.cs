@@ -8,4 +8,5 @@ namespace HealthNet.Services.UserServices;
 public interface IUserService
 {
     Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config);
+    Task<IEnumerable<UserResponse>> GetAllUsersAsync();
 }

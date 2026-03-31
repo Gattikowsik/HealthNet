@@ -29,7 +29,7 @@ public class Users
     public bool Status { get; set; }    //User might be active or inactive
 
     [Required]
-    [Column(TypeName = "VARCHAR(50)")]
+    [Column(TypeName = "VARCHAR(255)")]
     public string Password { get; set; } = null!;  //Password Hash for security
 
     public virtual Role? RoleNavigation { get; set; }  //Navigation property to Role

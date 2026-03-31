@@ -24,14 +24,6 @@ public class HealthNetContext : DbContext
     public virtual DbSet<SymptomReport> SymptomReports { get; set; }
     public virtual DbSet<Users> Userss { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer(@"data source=LTIN718388\SQLEXPRESS; database=HealthNetDataBase; integrated security=true; trust server certificate=true;");
-        }
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

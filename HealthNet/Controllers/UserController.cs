@@ -2,6 +2,7 @@ using System.Net;
 using HealthNet.DTOs;
 using HealthNet.DTOs.UserDTO;
 using HealthNet.Services.UserServices;
+using HealthNet.Utility;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -74,5 +75,45 @@ namespace HealthNet.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        // <summary>
+        // ForgotPassword method for resetting the password of the user
+        // </summary>
+        /// <param name="request">The forgot password data transfer object containing the email and new password.</param>
+        /// <returns>An IActionResult indicating the success or failure of the password reset operation.</returns>
+        [HttpPost("forgotpassword")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        {
+            try
+            {
+                if(request == null)
+                {
+                    return BadRequest(ForgotPasswordHelper.InvalidPassword);
+                }
+                // Call the service to do the actual work
+                var (success, message) = await _userService.ResetPasswordAsync(request);
+
+                // User doesn't exist
+                if (!success)
+                {
+                    return BadRequest(message); 
+                }
+
+                return Ok(new { message });
+            }
+            catch
+            {
+                // Handle exception if any 
+                return StatusCode(500, ForgotPasswordHelper.GenericError);
+            }
+        }
+
+
+
+
+
     }
 }

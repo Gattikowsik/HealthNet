@@ -110,12 +110,16 @@ public class UserService : IUserService
     //Register a User
     public async Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request)
         {
-            if (string.IsNullOrWhiteSpace(request.Email) ||                 //Validating the user details 
-                string.IsNullOrWhiteSpace(request.Password) ||
-                string.IsNullOrWhiteSpace(request.ConfirmPassword) ||
-                string.IsNullOrWhiteSpace(request.RoleName))
+            var emailResult = EmailHelper.ValidateEmail(request.Email);
+            if (!emailResult.IsValid)
             {
-                throw new ArgumentException("Invalid input");
+                throw new ArgumentException(emailResult.Message);
+            }
+            
+            var passwordResult = PasswordHelper.ValidatePassword(request.Password);
+            if (!passwordResult.IsValid)
+            {
+                throw new ArgumentException(passwordResult.Message);
             }
             if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
             {

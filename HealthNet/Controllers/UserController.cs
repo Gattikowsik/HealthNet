@@ -58,6 +58,7 @@ namespace HealthNet.Controllers
         /// <returns>An IActionResult containing the registration response or an error message.</returns>
         [HttpPost("register")]
         [ProducesResponseType(typeof(UserRegisterResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserRegisterResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequestDto request)
@@ -70,11 +71,19 @@ namespace HealthNet.Controllers
                     return BadRequest(ModelState);
                 }
                 var result = await _userService.RegisterUser(request);
-                return Ok(result);
+                return CreatedAtAction(nameof(Register), result);
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                return StatusCode(500, ex.Message);
+                return BadRequest(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500,"An unexpected error occurred." );
             }
         }
 

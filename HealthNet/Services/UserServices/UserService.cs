@@ -205,4 +205,39 @@ public class UserService : IUserService
             throw new HealthNetException($"An error occurred while processing the user list. {ex.Message}");
         }
     }
+
+        // Get User By Id Service
+    public async Task<Users?> GetUserByIdAsync(int id)
+    {
+        return await _repository.GetUserByIdAsync(id);
+    }
+
+    // Update User Service
+    /// <summary>
+    /// Updates the details of an existing user based on the provided user ID and update data transfer object (DTO).
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="dto"></param>
+    /// <returns>
+    /// If the user is updated successfully it return the user, otherwise it will return null if the user does not exist or is inactive.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+
+    public async Task<Users?> UpdateUserAsync(int id, UpdateUserDto dto)
+    {
+        var user = await _repository.GetUserByIdAsync(id);
+
+        if (user == null)
+            throw new HealthNetException(UpdateHelper.UserNotFound);
+
+        if (!user.Status)
+            throw new HealthNetException(UpdateHelper.UserInactive);
+
+        user.Name = dto.Name;
+        user.Email = dto.Email;
+        user.Phone = dto.PhoneNumber;
+
+        await _repository.UpdateUserAsync(user);
+        return user;
+    }
 }

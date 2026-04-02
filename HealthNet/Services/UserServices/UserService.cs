@@ -140,18 +140,18 @@ public class UserService : IUserService
     public async Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto)
     {
         try
-        {   
+        {
+            // Validate Password Strength
+            var (isValid, errorMessage) = ValidatePassword(dto.NewPassword);
+            if (!isValid)
+            {
+                return (false, errorMessage);
+            }
             // Steps for verification of new password
             if (dto.NewPassword != dto.ConfirmPassword)
             {
-                return (false, ForgotPasswordHelper.PasswordsDoNotMatch); 
+                return (false, ForgotPasswordHelper.PasswordsDoNotMatch);
             }
-            // Validate Password Strength
-            if (!IsValidPassword(dto.NewPassword))
-            {
-                return (false, ForgotPasswordHelper.InvalidPassword);
-            }
-
             //Get the user by email from the repo
             var user = await _repository.GetUserByEmailAsync(dto.Email);
             if (user == null)
@@ -168,20 +168,33 @@ public class UserService : IUserService
 
             return (true, ForgotPasswordHelper.PasswordUpdatedSuccess);
         }
-        catch 
+        catch
         {
             // Return the error message to the controller
-            return (false, ForgotPasswordHelper.GenericError); 
+            return (false, ForgotPasswordHelper.GenericError);
         }
     }
-
-    public bool IsValidPassword(string password)
+    public (bool IsValid, string ErrorMessage) ValidatePassword(string password)
     {
-        if (string.IsNullOrEmpty(password) )
-            return false;
+        if (string.IsNullOrEmpty(password))
+            return (false, "Password cannot be empty.");
 
-        var pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$";
-        return Regex.IsMatch(password, pattern);
+        if (password.Length < 8)
+            return (false, "Password must be at least 8 characters long.");
+
+        if (!password.Any(char.IsUpper))
+            return (false, "Password must contain at least one uppercase letter.");
+
+        if (!password.Any(char.IsLower))
+            return (false, "Password must contain at least one lowercase letter.");
+
+        if (!password.Any(char.IsDigit))
+            return (false, "Password must contain at least one number.");
+
+        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+            return (false, "Password must contain at least one special character.");
+
+        return (true, string.Empty);
     }
 
     // Get All Users Service

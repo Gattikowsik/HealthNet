@@ -5,7 +5,7 @@ namespace HealthNet.DTOs.UserDTO;
 
 public class UpdateUserDto
 {
-        [Required]
+    [Required]
     public string Name { get; set; } = null!;
 
     [Required]

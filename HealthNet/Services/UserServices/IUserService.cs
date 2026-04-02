@@ -13,5 +13,6 @@ public interface IUserService
     Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto);
     Task<IEnumerable<UserResponse>> GetAllUsersAsync();
     Task<Users?> GetUserByIdAsync(int id);
-    Task<Users?> UpdateUserAsync(int id, UpdateUserDto dto);
+  //  Task<Users?> UpdateUserAsync(int id, UpdateUserDto dto);
+    Task<UserResponse> UpdateUserAsync(int id, UpdateUserDto dto);
 }

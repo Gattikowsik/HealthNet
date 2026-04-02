@@ -5,7 +5,7 @@ namespace HealthNet.DTOs.UserDTO;
 
 public class UpdateUserDto
 {
-        [Required]
+    [Required]
     public string Name { get; set; } = null!;
 
     [Required]
@@ -15,4 +15,7 @@ public class UpdateUserDto
     [Required]
     [Phone]    //checks if the input looks like a valid phone number format
     public string PhoneNumber { get; set; } = null!;
+
+    [Required]
+    public string RoleName{get;set;}=null!;
 }

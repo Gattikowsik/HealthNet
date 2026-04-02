@@ -7,6 +7,7 @@ using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.Hosting;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace HealthNet.Controllers
@@ -162,6 +163,7 @@ namespace HealthNet.Controllers
         /// <exception cref="HealthNetException"></exception>
         // Update user details
         [HttpPost("update/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
             try
@@ -192,7 +194,7 @@ namespace HealthNet.Controllers
             try
             {
                 var user = await _userService.GetUserByIdAsync(id);
-                return Ok(user);
+                return Ok(Response);
             }
             catch (HealthNetException ex)
             {

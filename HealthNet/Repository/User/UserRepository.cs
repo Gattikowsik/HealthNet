@@ -127,4 +127,10 @@ public class UserRepository : IUserRepository
             throw new HealthNetException(ex.Message);
         }
     }
+    
+public async Task<Role?> GetRoleByNameAsync(string roleName)
+{
+    return await _context.Roles
+        .FirstOrDefaultAsync(r => r.RoleName == roleName);
+}
 }

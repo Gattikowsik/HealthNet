@@ -240,7 +240,7 @@ public class UserService : IUserService
     /// </returns>
     /// <exception cref="HealthNetException"></exception>
 
-    public async Task<Users?> UpdateUserAsync(int id, UpdateUserDto dto)
+    public async Task<UserResponse> UpdateUserAsync(int id, UpdateUserDto dto)
     {
         var user = await _repository.GetUserByIdAsync(id);
 
@@ -250,11 +250,28 @@ public class UserService : IUserService
         if (!user.Status)
             throw new HealthNetException(UpdateHelper.UserInactive);
 
+    // ✅ Validate role
+    var role = await _repository.GetRoleByNameAsync(dto.RoleName);
+    if (role == null)
+        throw new HealthNetException("Invalid role name");
+
         user.Name = dto.Name;
         user.Email = dto.Email;
         user.Phone = dto.PhoneNumber;
+        user.RoleId = role.RoleId;
 
         await _repository.UpdateUserAsync(user);
-        return user;
+
+        
+    return new UserResponse
+    {
+        UserId = user.UserId,
+        Name = user.Name,
+        Email = user.Email,
+        Phone = user.Phone,
+        Status = user.Status,
+        RoleName = role.RoleName
+    };
     }
 }
+

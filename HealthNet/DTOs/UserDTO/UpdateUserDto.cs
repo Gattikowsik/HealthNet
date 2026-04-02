@@ -15,4 +15,7 @@ public class UpdateUserDto
     [Required]
     [Phone]    //checks if the input looks like a valid phone number format
     public string PhoneNumber { get; set; } = null!;
+
+    [Required]
+    public string RoleName{get;set;}=null!;
 }

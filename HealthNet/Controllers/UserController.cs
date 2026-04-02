@@ -194,7 +194,7 @@ namespace HealthNet.Controllers
             try
             {
                 var user = await _userService.GetUserByIdAsync(id);
-                return Ok(user);
+                return Ok(Response);
             }
             catch (HealthNetException ex)
             {

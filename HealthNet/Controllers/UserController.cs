@@ -92,11 +92,12 @@ namespace HealthNet.Controllers
         // </summary>
         /// <param name="request">The forgot password data transfer object containing the email and new password.</param>
         /// <returns>An IActionResult indicating the success or failure of the password reset operation.</returns>
-        [HttpPost("forgotpassword")]
+        [HttpPut("forgotpassword")] 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        // [FromBody]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
         {
             try
             {

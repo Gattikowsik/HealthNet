@@ -47,8 +47,8 @@ namespace HealthNet.Controllers
             {
                 return Unauthorized(new { error = loginResult.ErrorMessage });
             }
-
-            return Ok(new { token = loginResult.Token });
+            
+            return Ok(new { auditLog = loginResult.Auditlog, token = loginResult.Token });
         }
 
         // <summary>

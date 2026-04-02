@@ -1,4 +1,3 @@
-using System;
 using HealthNetDb.Entities;
 using Microsoft.EntityFrameworkCore;
 namespace HealthNetDb.Data;
@@ -9,7 +8,7 @@ public class HealthNetContext : DbContext
 
     public HealthNetContext(DbContextOptions<HealthNetContext> options) : base(options){}
 
-    
+    public virtual DbSet<HealthNetDb.Entities.Action> Actions { get; set; }
     public virtual DbSet<Audit> Audits { get; set; }
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
     public virtual DbSet<Cases> Casess { get; set; }
@@ -28,7 +27,7 @@ public class HealthNetContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer("default connection string");
+            optionsBuilder.UseSqlServer(@"data source=LTIN718388\SQLEXPRESS; database=HealthNetDataBaseTest; integrated security=true; trust server certificate=true;");
         }
     }
 
@@ -61,11 +60,19 @@ public class HealthNetContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
 
         // Configure AuditLog -> Users (user)
-        // apply cascade OnDelete to user
+        // apply NoAction OnDelete to user
         modelBuilder.Entity<AuditLog>()
             .HasOne(al => al.UsersNavigation)
             .WithMany()
             .HasForeignKey(al => al.UserId)
+            .OnDelete(DeleteBehavior.NoAction);  //Keep
+
+        // Configure AuditLog -> Action
+        // Apply Cascade onDelete to Action
+        modelBuilder.Entity<AuditLog>()
+            .HasOne(al => al.ActionNavigation)
+            .WithMany()
+            .HasForeignKey(al => al.ActionId)
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
 
         // Configure Epidemiology -> Outbreak

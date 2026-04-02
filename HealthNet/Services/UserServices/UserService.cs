@@ -21,11 +21,10 @@ public class UserService : IUserService
     /// Constructor for UserService, injects IUserRepository for data access and business logic separation.
     /// </summary>
     /// <param name="repository">The user repository instance for data access.</param>
-
-        public UserService(IUserRepository repository)
-        {
-            _repository = repository;
-        }
+    public UserService(IUserRepository repository)
+    {
+        _repository = repository;
+    }
     // Login Service
     public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
     {
@@ -60,10 +59,14 @@ public class UserService : IUserService
         }
         // Generate token
         var token = await GenerateJwtTokenServiceAsync(user, _config);
+        int actionId = await _repository.GetActionIdAsync("Login");
+        var roleName = user.RoleNavigation?.RoleName ?? "Unknown";
+        AuditLog auditLog = await _repository.InsertIntoAuditLogAsync(actionId, user.UserId, roleName);
         return new LoginResult
         {
             Success = true,
             Token = token,
+            Auditlog = auditLog
         };
     }
 

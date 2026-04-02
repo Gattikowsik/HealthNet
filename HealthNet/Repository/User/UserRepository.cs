@@ -91,4 +91,36 @@ public class UserRepository : IUserRepository
             throw new HealthNetException($"An error occurred while fetching users from the database. {ex.Message}");
         }
     }
+
+    public async Task<int> GetActionIdAsync(String actionName){
+        try{
+            HealthNetDb.Entities.Action action = await (from ac in _context.Actions where ac.ActionName==actionName select ac).FirstAsync();
+            return action.ActionId;
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
+        }
+    }
+
+    public async Task<AuditLog> InsertIntoAuditLogAsync(int actionId, int userId, string role)
+    {
+        try
+        {
+            AuditLog auditLog = new AuditLog();
+            auditLog.ActionId = actionId;
+            auditLog.UserId = userId;
+            auditLog.Timestamp = DateTime.Now;
+            auditLog.Resource = role;
+            await _context.AuditLogs.AddAsync(auditLog);
+            await _context.SaveChangesAsync();
+            return auditLog;
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
+        }
+    }
+
+	
 }

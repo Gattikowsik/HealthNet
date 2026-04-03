@@ -7,6 +7,7 @@ using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.Hosting;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace HealthNet.Controllers
@@ -58,6 +59,7 @@ namespace HealthNet.Controllers
         /// <returns>An IActionResult containing the registration response or an error message.</returns>
         [HttpPost("register")]
         [ProducesResponseType(typeof(UserRegisterResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserRegisterResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequestDto request)
@@ -70,11 +72,19 @@ namespace HealthNet.Controllers
                     return BadRequest(ModelState);
                 }
                 var result = await _userService.RegisterUser(request);
-                return Ok(result);
+                return CreatedAtAction(nameof(Register), result);
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                return StatusCode(500, ex.Message);
+                return BadRequest(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500,"An unexpected error occurred." );
             }
         }
 
@@ -83,11 +93,12 @@ namespace HealthNet.Controllers
         // </summary>
         /// <param name="request">The forgot password data transfer object containing the email and new password.</param>
         /// <returns>An IActionResult indicating the success or failure of the password reset operation.</returns>
-        [HttpPost("forgotpassword")]
+        [HttpPut("forgotpassword")] 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        // [FromBody]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request)
         {
             try
             {
@@ -139,6 +150,59 @@ namespace HealthNet.Controllers
                 count = users.Count(),
                 data = users
             });
+        }
+        // Update user details
+        /// <summary>
+        /// Updates the details of an existing user based on the provided user ID and update data transfer object (DTO).
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns>
+        /// If the user is updated successfully it return the user, otherwise it will return null if the user does not exist or is inactive.
+        /// </returns>
+        /// <exception cref="HealthNetException"></exception>
+        // Update user details
+        [HttpPost("update/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        {
+            try
+            {
+                var user = await _userService.UpdateUserAsync(id, dto);
+                return Ok(user);
+            }
+            catch (HealthNetException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        // Get user by id
+        /// <summary>
+        /// Retrieves a user entity from the database based on the provided user ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>
+        /// The user entity corresponding to the provided ID, or null if not found.
+        /// </returns>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            try
+            {
+                var user = await _userService.GetUserByIdAsync(id);
+                return Ok(Response);
+            }
+            catch (HealthNetException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
         }
     }
 }

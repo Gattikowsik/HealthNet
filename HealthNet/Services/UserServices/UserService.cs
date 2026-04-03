@@ -112,27 +112,27 @@ public class UserService : IUserService
 
     //Register a User
     public async Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request)
+    {
+        var emailResult = EmailHelper.ValidateEmail(request.Email);
+        if (!emailResult.IsValid)
         {
-            var emailResult = EmailHelper.ValidateEmail(request.Email);
-            if (!emailResult.IsValid)
-            {
-                throw new ArgumentException(emailResult.Message);
-            }
-            
-            var passwordResult = PasswordHelper.ValidatePassword(request.Password);
-            if (!passwordResult.IsValid)
-            {
-                throw new ArgumentException(passwordResult.Message);
-            }
-            if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
-            {
-                throw new ArgumentException("Passwords do not match");
-            }
-            request.Password =
-                BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
-
-            return await _repository.RegisterUser(request);
+            throw new ArgumentException(emailResult.Message);
         }
+
+        var passwordResult = PasswordHelper.ValidatePassword(request.Password);
+        if (!passwordResult.IsValid)
+        {
+            throw new ArgumentException(passwordResult.Message);
+        }
+        if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
+        {
+            throw new ArgumentException("Passwords do not match");
+        }
+        request.Password =
+            BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
+
+        return await _repository.RegisterUser(request);
+    }
 
 
     //Forgot Password Functionality
@@ -226,7 +226,7 @@ public class UserService : IUserService
         }
     }
 
-        // Get User By Id Service
+    // Get User By Id Service
     public async Task<Users?> GetUserByIdAsync(int id)
     {
         return await _repository.GetUserByIdAsync(id);
@@ -253,10 +253,10 @@ public class UserService : IUserService
         if (!user.Status)
             throw new HealthNetException(UpdateHelper.UserInactive);
 
-    // ✅ Validate role
-    var role = await _repository.GetRoleByNameAsync(dto.RoleName);
-    if (role == null)
-        throw new HealthNetException("Invalid role name");
+        // ✅ Validate role
+        var role = await _repository.GetRoleByNameAsync(dto.RoleName);
+        if (role == null)
+            throw new HealthNetException("Invalid role name");
 
         user.Name = dto.Name;
         user.Email = dto.Email;
@@ -265,16 +265,16 @@ public class UserService : IUserService
 
         await _repository.UpdateUserAsync(user);
 
-        
-    return new UserResponse
-    {
-        UserId = user.UserId,
-        Name = user.Name,
-        Email = user.Email,
-        Phone = user.Phone,
-        Status = user.Status,
-        RoleName = role.RoleName
-    };
+
+        return new UserResponse
+        {
+            UserId = user.UserId,
+            Name = user.Name,
+            Email = user.Email,
+            Phone = user.Phone,
+            Status = user.Status,
+            RoleName = role.RoleName
+        };
     }
 }
 

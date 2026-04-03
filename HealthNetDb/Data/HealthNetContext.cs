@@ -4,9 +4,9 @@ namespace HealthNetDb.Data;
 
 public class HealthNetContext : DbContext
 {
-    public HealthNetContext(){}
+    public HealthNetContext() { }
 
-    public HealthNetContext(DbContextOptions<HealthNetContext> options) : base(options){}
+    public HealthNetContext(DbContextOptions<HealthNetContext> options) : base(options) { }
 
     public virtual DbSet<HealthNetDb.Entities.Action> Actions { get; set; }
     public virtual DbSet<Audit> Audits { get; set; }
@@ -27,7 +27,7 @@ public class HealthNetContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer(@"data source=LTIN718388\SQLEXPRESS; database=HealthNetDataBaseTest; integrated security=true; trust server certificate=true;");
+            optionsBuilder.UseSqlServer("Default Connection");
         }
     }
 
@@ -83,7 +83,7 @@ public class HealthNetContext : DbContext
             .HasForeignKey(e => e.OutbreakId)
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
 
-        
+
         // Configure LabTest -> Patient
         // apply cascade OnDelete to Patient
         modelBuilder.Entity<LabTest>()
@@ -91,7 +91,7 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(lt => lt.PatientId)
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
-        
+
         // Configure LabTest -> Users(Technician)
         // apply cascade OnDelete to Techincian
         modelBuilder.Entity<LabTest>()
@@ -99,7 +99,7 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(lt => lt.TechnicianId)
             .OnDelete(DeleteBehavior.NoAction);  //keep
-        
+
         // Build one-to-one relation b/w labtest and labreport
         // apply cascade Restrict to lebreport
         modelBuilder.Entity<LabTest>()
@@ -115,6 +115,6 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(mr => mr.PatientId)
             .OnDelete(DeleteBehavior.Cascade); //Ok to Delete
-    }   
+    }
 
 }

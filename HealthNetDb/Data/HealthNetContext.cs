@@ -1,15 +1,14 @@
-using System;
 using HealthNetDb.Entities;
 using Microsoft.EntityFrameworkCore;
 namespace HealthNetDb.Data;
 
 public class HealthNetContext : DbContext
 {
-    public HealthNetContext(){}
+    public HealthNetContext() { }
 
-    public HealthNetContext(DbContextOptions<HealthNetContext> options) : base(options){}
+    public HealthNetContext(DbContextOptions<HealthNetContext> options) : base(options) { }
 
-    
+    public virtual DbSet<HealthNetDb.Entities.Action> Actions { get; set; }
     public virtual DbSet<Audit> Audits { get; set; }
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
     public virtual DbSet<Cases> Casess { get; set; }
@@ -28,7 +27,7 @@ public class HealthNetContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer("default connection string");
+            optionsBuilder.UseSqlServer("Default Connection");
         }
     }
 
@@ -61,11 +60,19 @@ public class HealthNetContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
 
         // Configure AuditLog -> Users (user)
-        // apply cascade OnDelete to user
+        // apply NoAction OnDelete to user
         modelBuilder.Entity<AuditLog>()
             .HasOne(al => al.UsersNavigation)
             .WithMany()
             .HasForeignKey(al => al.UserId)
+            .OnDelete(DeleteBehavior.NoAction);  //Keep
+
+        // Configure AuditLog -> Action
+        // Apply Cascade onDelete to Action
+        modelBuilder.Entity<AuditLog>()
+            .HasOne(al => al.ActionNavigation)
+            .WithMany()
+            .HasForeignKey(al => al.ActionId)
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
 
         // Configure Epidemiology -> Outbreak
@@ -76,7 +83,7 @@ public class HealthNetContext : DbContext
             .HasForeignKey(e => e.OutbreakId)
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
 
-        
+
         // Configure LabTest -> Patient
         // apply cascade OnDelete to Patient
         modelBuilder.Entity<LabTest>()
@@ -84,7 +91,7 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(lt => lt.PatientId)
             .OnDelete(DeleteBehavior.Cascade);  //Ok to Delete
-        
+
         // Configure LabTest -> Users(Technician)
         // apply cascade OnDelete to Techincian
         modelBuilder.Entity<LabTest>()
@@ -92,7 +99,7 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(lt => lt.TechnicianId)
             .OnDelete(DeleteBehavior.NoAction);  //keep
-        
+
         // Build one-to-one relation b/w labtest and labreport
         // apply cascade Restrict to lebreport
         modelBuilder.Entity<LabTest>()
@@ -108,6 +115,6 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(mr => mr.PatientId)
             .OnDelete(DeleteBehavior.Cascade); //Ok to Delete
-    }   
+    }
 
 }

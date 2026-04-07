@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HealthNet.Repository.LabTestRepo;
 
-public class LabTestRepository : ILabTestRepository
+public class LaboratoryTestingRepository : ILaboratoryTestingRepository
 {
     private readonly HealthNetContext _context;
 
     /// <summary>
-    /// Constructor for LabTestRepository, injects HealthNetContext for database access.
+    /// Constructor for LaboratoryTestingRepository, injects HealthNetContext for database access.
     /// </summary>
     /// <param name="context">The database context used for accessing lab test data.</param>
-    public LabTestRepository(HealthNetContext context)
+    public LaboratoryTestingRepository(HealthNetContext context)
     {
         _context = context;
     }

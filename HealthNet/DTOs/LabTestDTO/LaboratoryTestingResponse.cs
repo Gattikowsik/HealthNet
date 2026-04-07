@@ -2,7 +2,7 @@ using System;
 
 namespace HealthNet.DTOs.LabTestDTO;
 
-public class LabTestResponse
+public class LaboratoryTestingResponse
 {
     public int TestId { get; set; }             // Created TestID
     public int PatientId { get; set; }

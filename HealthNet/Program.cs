@@ -17,8 +17,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ILabTestRepository, LabTestRepository>();
-builder.Services.AddScoped<ILabTestService, LabTestService>();
+builder.Services.AddScoped<ILaboratoryTestingRepository, LaboratoryTestingRepository>();
+builder.Services.AddScoped<ILaboratoryTestingService, LaboratoryTestingService>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

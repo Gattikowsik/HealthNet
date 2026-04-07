@@ -2,7 +2,7 @@ using System;
 
 namespace HealthNet.DTOs.LabTestDTO;
 
-public class LabTestRequest
+public class LaboratoryTestingRequest
 {
     public int PatientId { get; set; }          // Patient to create test for
     public string Type { get; set; } = null!;   // Blood / Swab / X-Ray

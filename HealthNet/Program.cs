@@ -1,6 +1,7 @@
 using System.Text;
 using HealthNet.Repository;
 using HealthNet.Repository.User;
+using HealthNet.Services;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISymptomReportRepository, SymptomReportRepository>();
+builder.Services.AddScoped<ISymptomReportService, SymptomReportService>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

@@ -14,7 +14,7 @@ public class SymptomReport
     public int CitizenId { get; set; }      //Foreign Key from Users table
     public Users Citizen { get; set; } = null!;   //Navigation Property
 
-    [Column(TypeName = "VARCHAR(300)")]
+    [MaxLength]
     [Required]
     public string SymptomsJson { get; set; } = null!;
 

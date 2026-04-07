@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace HealthNet.Controllers
 {
-    [Route("api/symptomReport")]
+    [Route("api/v1/symptomReport")]
     [ApiController]
     [Authorize(Roles = "Citizen")]
     public class SymptomReportController : ControllerBase

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HealthNet.DTOs;
 using HealthNet.Services;
 using HealthNet.Utility;
+using HealthNetDb.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace HealthNet.Controllers

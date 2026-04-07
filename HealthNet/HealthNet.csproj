@@ -19,7 +19,10 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="DTOs\LabTestDTO\" />
+    <Folder Include="Repository\LabTestRepo\" />
     <Folder Include="Services\" />
+    <Folder Include="Services\LabTestServices\" />
     <Folder Include="Services\UserServices\" />
     <Folder Include="Utility\" />
   </ItemGroup>

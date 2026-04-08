@@ -7,18 +7,23 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace HealthNet.Controllers
 {
-    [Route("api/v1/symptomReport")]
+    [Route("api/v1/Citizen Symptom Reporting")]
     [ApiController]
-    [Authorize(Roles = "Citizen")]
-    public class SymptomReportController : ControllerBase
-    {    
-        private readonly ISymptomReportService _service;
-        public SymptomReportController(ISymptomReportService service)
+    [ProducesResponseType(typeof(SubmitSymptomReportResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public class CitizenSymptomReportingController : ControllerBase
+    {
+        private readonly ISubmitSymptomReportService _service;
+        public CitizenSymptomReportingController(ISubmitSymptomReportService service)
         {
             _service = service;
         }
-    [HttpPost]
-    public async Task<IActionResult> Submit([FromBody] SymptomReportRequestDto request)
+        [HttpPost]
+        [Authorize(Roles = "Citizen")]
+        public async Task<IActionResult> Submit([FromBody] SubmitSymptomReportRequestDto request)
         {
             // Model validation (Required fields etc.)
             if (!ModelState.IsValid)
@@ -40,7 +45,7 @@ namespace HealthNet.Controllers
             var response = await _service.SubmitAsync(request, citizenId);
 
             // Return 201
-            return Created( $"/api/symptom-reports/{response.ReportId}",response);
+            return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
         }
     }
 }

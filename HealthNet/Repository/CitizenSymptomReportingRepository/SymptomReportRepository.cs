@@ -2,10 +2,10 @@ using System;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 namespace HealthNet.Repository;
-public class SymptomReportRepository : ISymptomReportRepository
+public class SubmitSymptomReportRepository : ISubmitSymptomReportRepository
 {
-private readonly HealthNetContext _context;
-    public SymptomReportRepository(HealthNetContext context)
+    private readonly HealthNetContext _context;
+    public SubmitSymptomReportRepository(HealthNetContext context)
     {
         _context = context;
     }

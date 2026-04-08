@@ -16,8 +16,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ISymptomReportRepository, SymptomReportRepository>();
-builder.Services.AddScoped<ISymptomReportService, SymptomReportService>();
+builder.Services.AddScoped<ISubmitSymptomReportRepository, SubmitSymptomReportRepository>();
+builder.Services.AddScoped<ISubmitSymptomReportService, SubmitSymptomReportService>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

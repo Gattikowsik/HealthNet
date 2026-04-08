@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 namespace HealthNet.DTOs;
 
-public class SymptomReportRequestDto
+public class SubmitSymptomReportRequestDto
 {
     /// <summary>
     /// Structured symptom data sent as a JSON string.

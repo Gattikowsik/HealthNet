@@ -28,7 +28,7 @@ public class HealthNetContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer("default connection string");
+            optionsBuilder.UseSqlServer("DefaultConnection");
         }
     }
 

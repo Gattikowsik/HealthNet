@@ -1,6 +1,8 @@
 using System.Text;
 using HealthNet.Repository;
+using HealthNet.Repository.ComplianceRecord;
 using HealthNet.Repository.User;
+using HealthNet.Services.ComplianceRecordServices;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
+builder.Services.AddScoped<IComplianceRepository, ComplianceRepository>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

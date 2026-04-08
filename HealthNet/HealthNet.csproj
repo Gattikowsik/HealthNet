@@ -19,6 +19,10 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="DTOs\ComplianceRecordDto\" />
+    <Folder Include="Repository\ComplianceRecord\" />
+    <Folder Include="Services\" />
+    <Folder Include="Services\ComplianceRecordServices\" />
     <Folder Include="Services\UserServices\" />
     <Folder Include="Utility\" />
   </ItemGroup>

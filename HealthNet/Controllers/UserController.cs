@@ -160,7 +160,7 @@ namespace HealthNet.Controllers
         /// </returns>
         /// <exception cref="HealthNetException"></exception>
         // Update user details
-        [HttpPost("update/{id}")]
+        [HttpPut("update/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
@@ -187,12 +187,13 @@ namespace HealthNet.Controllers
         /// The user entity corresponding to the provided ID, or null if not found.
         /// </returns>
         [HttpGet("{id}")]
+        [Authorize(Roles ="Admin")]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
             {
                 var user = await _userService.GetUserByIdAsync(id);
-                return Ok(Response);
+                return Ok(user);
             }
             catch (HealthNetException ex)
             {

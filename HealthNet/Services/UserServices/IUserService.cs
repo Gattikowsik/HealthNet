@@ -12,8 +12,7 @@ public interface IUserService
   Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request);
   Task<(bool success, string message)> ResetPasswordAsync(ForgotPasswordDto dto);
   Task<IEnumerable<UserResponse>> GetAllUsersAsync();
-  Task<Users?> GetUserByIdAsync(int id);
-  //  Task<Users?> UpdateUserAsync(int id, UpdateUserDto dto);
+  Task<UserResponse> GetUserByIdAsync(int id);
   Task<UserResponse> UpdateUserAsync(int id, UpdateUserDto dto);
   Task<UserDeleteResponseDto> DeActivateUserAsync(int id);
 }

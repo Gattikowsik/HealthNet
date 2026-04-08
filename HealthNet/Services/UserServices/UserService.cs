@@ -226,11 +226,26 @@ public class UserService : IUserService
         }
     }
 
-    // Get User By Id Service
-    public async Task<Users?> GetUserByIdAsync(int id)
+    public async Task<UserResponse> GetUserByIdAsync(int id){
+    var user = await _repository.GetUserByIdAsync(id);
+
+    if (user == null)
+        throw new HealthNetException("User not found");
+
+    if (!user.Status)
+        throw new HealthNetException("User is inactive");
+
+    return new UserResponse
     {
-        return await _repository.GetUserByIdAsync(id);
-    }
+        UserId = user.UserId,
+        Name = user.Name,
+        Email = user.Email,
+        Phone = user.Phone,
+        Status = user.Status,
+        RoleName = user.RoleNavigation!.RoleName
+    };
+}
+
 
     // Update User Service
     /// <summary>

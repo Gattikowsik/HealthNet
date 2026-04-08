@@ -91,11 +91,7 @@ public class UserRepository : IUserRepository
     /// <summary>
     /// Retrieves a user entity from the database based on the provided user ID.
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns>
-    /// The user entity corresponding to the provided ID, or null if not found.
-    /// </returns>
-    /// <exception cref="HealthNetException"></exception>
+    
     public async Task<Users?> GetUserByIdAsync(int id)
     {
         try
@@ -137,6 +133,7 @@ public class UserRepository : IUserRepository
         return await _context.Roles
             .FirstOrDefaultAsync(r => r.RoleName == roleName);
     }
+
 
     /// <summary>
     /// Getting Action Id using Action Name from the database.

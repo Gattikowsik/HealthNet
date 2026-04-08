@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using HealthNet.DTOs;
+using HealthNet.DTOs.UserDTO;
 using HealthNetDb.Entities;
 namespace HealthNet.Repository.User;
 
@@ -14,4 +15,5 @@ public interface IUserRepository
     Task<Role?> GetRoleByNameAsync(string roleName);
     Task<int> GetActionIdAsync(String actionName);
     Task<AuditLog> InsertIntoAuditLogAsync(int actionId, int userId, string role);
+    Task<Users> UpdateUserStatusAsync(int userId);
 }

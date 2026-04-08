@@ -21,11 +21,10 @@ public class UserService : IUserService
     /// Constructor for UserService, injects IUserRepository for data access and business logic separation.
     /// </summary>
     /// <param name="repository">The user repository instance for data access.</param>
-
-        public UserService(IUserRepository repository)
-        {
-            _repository = repository;
-        }
+    public UserService(IUserRepository repository)
+    {
+        _repository = repository;
+    }
     // Login Service
     public async Task<LoginResult> LoginServiceAsync(UserLoginRequest request, HealthNetContext _context, IConfiguration _config)
     {
@@ -60,10 +59,14 @@ public class UserService : IUserService
         }
         // Generate token
         var token = await GenerateJwtTokenServiceAsync(user, _config);
+        int actionId = await _repository.GetActionIdAsync("Login");
+        var roleName = user.RoleNavigation?.RoleName ?? "Unknown";
+        AuditLog auditLog = await _repository.InsertIntoAuditLogAsync(actionId, user.UserId, roleName);
         return new LoginResult
         {
             Success = true,
             Token = token,
+            Auditlog = auditLog
         };
     }
 
@@ -109,27 +112,27 @@ public class UserService : IUserService
 
     //Register a User
     public async Task<UserRegisterResponseDto> RegisterUser(UserRegisterRequestDto request)
+    {
+        var emailResult = EmailHelper.ValidateEmail(request.Email);
+        if (!emailResult.IsValid)
         {
-            var emailResult = EmailHelper.ValidateEmail(request.Email);
-            if (!emailResult.IsValid)
-            {
-                throw new ArgumentException(emailResult.Message);
-            }
-            
-            var passwordResult = PasswordHelper.ValidatePassword(request.Password);
-            if (!passwordResult.IsValid)
-            {
-                throw new ArgumentException(passwordResult.Message);
-            }
-            if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
-            {
-                throw new ArgumentException("Passwords do not match");
-            }
-            request.Password =
-                BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
-
-            return await _repository.RegisterUser(request);
+            throw new ArgumentException(emailResult.Message);
         }
+
+        var passwordResult = PasswordHelper.ValidatePassword(request.Password);
+        if (!passwordResult.IsValid)
+        {
+            throw new ArgumentException(passwordResult.Message);
+        }
+        if (request.Password != request.ConfirmPassword)                //validating wheather password and confirmpassword match
+        {
+            throw new ArgumentException("Passwords do not match");
+        }
+        request.Password =
+            BCrypt.Net.BCrypt.HashPassword(request.Password);           //Hashing the password and stroring in DB
+
+        return await _repository.RegisterUser(request);
+    }
 
 
     //Forgot Password Functionality
@@ -223,11 +226,26 @@ public class UserService : IUserService
         }
     }
 
-        // Get User By Id Service
-    public async Task<Users?> GetUserByIdAsync(int id)
+    public async Task<UserResponse> GetUserByIdAsync(int id){
+    var user = await _repository.GetUserByIdAsync(id);
+
+    if (user == null)
+        throw new HealthNetException("User not found");
+
+    if (!user.Status)
+        throw new HealthNetException("User is inactive");
+
+    return new UserResponse
     {
-        return await _repository.GetUserByIdAsync(id);
-    }
+        UserId = user.UserId,
+        Name = user.Name,
+        Email = user.Email,
+        Phone = user.Phone,
+        Status = user.Status,
+        RoleName = user.RoleNavigation!.RoleName
+    };
+}
+
 
     // Update User Service
     /// <summary>
@@ -250,10 +268,10 @@ public class UserService : IUserService
         if (!user.Status)
             throw new HealthNetException(UpdateHelper.UserInactive);
 
-    // ✅ Validate role
-    var role = await _repository.GetRoleByNameAsync(dto.RoleName);
-    if (role == null)
-        throw new HealthNetException("Invalid role name");
+        // ✅ Validate role
+        var role = await _repository.GetRoleByNameAsync(dto.RoleName);
+        if (role == null)
+            throw new HealthNetException("Invalid role name");
 
         user.Name = dto.Name;
         user.Email = dto.Email;
@@ -262,16 +280,16 @@ public class UserService : IUserService
 
         await _repository.UpdateUserAsync(user);
 
-        
-    return new UserResponse
-    {
-        UserId = user.UserId,
-        Name = user.Name,
-        Email = user.Email,
-        Phone = user.Phone,
-        Status = user.Status,
-        RoleName = role.RoleName
-    };
+
+        return new UserResponse
+        {
+            UserId = user.UserId,
+            Name = user.Name,
+            Email = user.Email,
+            Phone = user.Phone,
+            Status = user.Status,
+            RoleName = role.RoleName
+        };
     }
 }
 

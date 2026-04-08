@@ -90,21 +90,12 @@ public class UserRepository : IUserRepository
     /// <summary>
     /// Retrieves a user entity from the database based on the provided user ID.
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns>
-    /// The user entity corresponding to the provided ID, or null if not found.
-    /// </returns>
-    /// <exception cref="HealthNetException"></exception>
+    
     public async Task<Users?> GetUserByIdAsync(int id)
     {
-        try
-        {
-            return await _context.Userss.FindAsync(id);
-        }
-        catch (Exception ex)
-        {
-            throw new HealthNetException(ex.Message);
-        }
+        return await _context.Userss
+            .Include(u=>u.RoleNavigation)
+            .FirstOrDefaultAsync(u=>u.UserId==id);
     }
 
     /// <summary>
@@ -127,10 +118,61 @@ public class UserRepository : IUserRepository
             throw new HealthNetException(ex.Message);
         }
     }
-    
-public async Task<Role?> GetRoleByNameAsync(string roleName)
-{
-    return await _context.Roles
-        .FirstOrDefaultAsync(r => r.RoleName == roleName);
-}
+
+    public async Task<Role?> GetRoleByNameAsync(string roleName)
+    {
+        return await _context.Roles
+            .FirstOrDefaultAsync(r => r.RoleName == roleName);
+    }
+
+
+    /// <summary>
+    /// Getting Action Id using Action Name from the database.
+    /// </summary>
+    /// <param name="acttionName"></param>
+    /// <returns>
+    ///  It returns the Id of the Action from the Database.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>    
+    public async Task<int> GetActionIdAsync(String actionName)
+    {
+        try
+        {
+            HealthNetDb.Entities.Action action = await (from ac in _context.Actions where ac.ActionName == actionName select ac).FirstAsync();
+            return action.ActionId;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Inserts the Data into AuditLog table in the Database.
+    /// </summary>
+    /// <param name="actionId"></param>
+    /// <param name="userId"></param>
+    /// <param name="role"></param>
+    /// <returns>
+    ///  It returns the AuditLog object which is inserted into the table.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<AuditLog> InsertIntoAuditLogAsync(int actionId, int userId, string role)
+    {
+        try
+        {
+            AuditLog auditLog = new AuditLog();
+            auditLog.ActionId = actionId;
+            auditLog.UserId = userId;
+            auditLog.Timestamp = DateTime.Now;
+            auditLog.Resource = role;
+            await _context.AuditLogs.AddAsync(auditLog);
+            await _context.SaveChangesAsync();
+            return auditLog;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
+        }
+    }
 }

@@ -1,7 +1,10 @@
 using System.Text;
 using HealthNet.Repository;
+using HealthNet.Repository.LabTestRepo;
 using HealthNet.Repository.ComplianceRecord;
 using HealthNet.Repository.User;
+using HealthNet.Services;
+using HealthNet.Services.LabTestServices;
 using HealthNet.Services.ComplianceRecordServices;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
@@ -17,6 +20,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISubmitSymptomReportRepository, SubmitSymptomReportRepository>();
+builder.Services.AddScoped<ISubmitSymptomReportService, SubmitSymptomReportService>();
+builder.Services.AddScoped<ILaboratoryTestingRepository, LaboratoryTestingRepository>();
+builder.Services.AddScoped<ILaboratoryTestingService, LaboratoryTestingService>();
 builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
 builder.Services.AddScoped<IComplianceRepository, ComplianceRepository>();
 builder.Services.AddDbContext<HealthNetContext>(options =>

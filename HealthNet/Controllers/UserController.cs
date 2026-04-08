@@ -7,8 +7,6 @@ using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Razor.Hosting;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace HealthNet.Controllers
 {
@@ -84,7 +82,7 @@ namespace HealthNet.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500,"An unexpected error occurred." );
+                return StatusCode(500, "An unexpected error occurred.");
             }
         }
 
@@ -93,7 +91,7 @@ namespace HealthNet.Controllers
         // </summary>
         /// <param name="request">The forgot password data transfer object containing the email and new password.</param>
         /// <returns>An IActionResult indicating the success or failure of the password reset operation.</returns>
-        [HttpPut("forgotpassword")] 
+        [HttpPut("forgotpassword")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -162,7 +160,7 @@ namespace HealthNet.Controllers
         /// </returns>
         /// <exception cref="HealthNetException"></exception>
         // Update user details
-        [HttpPost("update/{id}")]
+        [HttpPut("update/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
@@ -189,12 +187,13 @@ namespace HealthNet.Controllers
         /// The user entity corresponding to the provided ID, or null if not found.
         /// </returns>
         [HttpGet("{id}")]
+        [Authorize(Roles ="Admin")]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
             {
                 var user = await _userService.GetUserByIdAsync(id);
-                return Ok(Response);
+                return Ok(user);
             }
             catch (HealthNetException ex)
             {

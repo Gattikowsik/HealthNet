@@ -1,5 +1,6 @@
 using System;
 using HealthNet.DTOs;
+using HealthNet.DTOs.UserDTO;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -99,7 +100,10 @@ public class UserRepository : IUserRepository
     {
         try
         {
-            return await _context.Userss.FindAsync(id);
+            var user = await _context.Userss
+                .Include(u => u.RoleNavigation)
+                .FirstOrDefaultAsync(u => u.UserId == id);
+            return user;
         }
         catch (Exception ex)
         {
@@ -177,6 +181,34 @@ public class UserRepository : IUserRepository
             await _context.AuditLogs.AddAsync(auditLog);
             await _context.SaveChangesAsync();
             return auditLog;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// DeActivates the User in the Database
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns>
+    ///  The User who got DeActivated.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<Users> UpdateUserStatusAsync(int userId)
+    {
+        try
+        {
+            Users? user = await GetUserByIdAsync(userId);
+            if (user.Status == false)
+            {
+                throw new HealthNetException("No Active user found with this User Id.");
+            }
+            if (user != null)
+                user.Status = false;
+            await _context.SaveChangesAsync();
+            return user;
         }
         catch (Exception ex)
         {

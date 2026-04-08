@@ -276,5 +276,48 @@ public class UserService : IUserService
             RoleName = role.RoleName
         };
     }
+
+    // Delete User Service
+    /// <summary>
+    /// The User status will be modified to InActive in this service.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns>
+    /// If the user Account Deactivation is successful then it will return the UserDeleteResponse DTO.
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<UserDeleteResponseDto> DeActivateUserAsync(int id)
+    {
+        if (id <= 0)
+        {
+            return new UserDeleteResponseDto
+            {
+                Success = false,
+                ErrorMessage = "Invalid User Id."
+            };
+        }
+        Users? user = await _repository.GetUserByIdAsync(id);
+        if (user == null || user.Status == false)
+        {
+            return new UserDeleteResponseDto
+            {
+                Success = false,
+                ErrorMessage = "No Active user found with this Id."
+            };
+        }
+
+        Users u = await _repository.UpdateUserStatusAsync(id);
+        int actionId = await _repository.GetActionIdAsync("Delete");
+        Console.WriteLine("User Details : "+u);
+        var roleName = user.RoleNavigation?.RoleName ?? "Unknown";
+        AuditLog auditLog = await _repository.InsertIntoAuditLogAsync(actionId, id, roleName);
+        return new UserDeleteResponseDto
+        {
+            Success = true,
+            Email = u.Email,
+            AuditLog = auditLog,
+            ErrorMessage = $"User With Id {id} Deleted Succesfully."
+        };
+    }
 }
 

@@ -202,5 +202,37 @@ namespace HealthNet.Controllers
                 });
             }
         }
+
+        // Delete user by id
+        /// <summary>
+        /// DeActivates a User Id from the database based on provided user id.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>
+        /// The Message and Email corresponding to the provided ID, or Error Message if not found.
+        /// </returns>
+        [HttpPatch("delete/{userId}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> SoftDeleteUser(int userId)
+        {
+            var deleteResult = await _userService.DeActivateUserAsync(userId);
+            if (!deleteResult.Success)
+            {
+                return BadRequest(
+                    new
+                    {
+                        Message = deleteResult.ErrorMessage
+                    });
+            }
+
+            return Ok(
+                new
+                {
+                    Message = deleteResult.ErrorMessage,
+                    Email = deleteResult.Email
+                });
+        }
     }
 }

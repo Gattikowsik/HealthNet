@@ -22,3 +22,5 @@ public class ComplianceHelper
     // If something unexpected goes wrong
     public const string GenericError = "Something went wrong. Please try again.";
 }
+
+

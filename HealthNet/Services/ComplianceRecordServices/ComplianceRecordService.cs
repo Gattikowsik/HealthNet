@@ -64,7 +64,7 @@ public class ComplianceRecordService : IComplianceRecordService
                 .FirstAsync();
 
             // ── STEP 6: Log to AuditLog ────────────────────────────
-            var auditLog = new AuditLog
+            var auditLog = new HealthNetDb.Entities.AuditLog
             {
                 UserId = userId,
                 ActionId = actionId,

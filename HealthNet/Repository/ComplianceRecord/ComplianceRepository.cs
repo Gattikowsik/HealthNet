@@ -24,9 +24,11 @@ public class ComplianceRepository : IComplianceRepository
             EntityId = request.EntityId,
             Type = request.Type.ToLower(),
             Result = request.Result,
-            Date = request.Date,
+            Date = DateTime.UtcNow,
             Notes = request.Notes
         };
+
+        
 
         // Save to DB — EF Core generates the ComplianceId after this
         _context.ComplianceRecords.Add(record);

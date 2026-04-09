@@ -4,6 +4,7 @@ using HealthNet.Repository.LabTestRepo;
 using HealthNetDb.Entities;
 using HealthNetDb.Data;
 using Microsoft.EntityFrameworkCore;
+using HealthNet.Utility;
 
 namespace HealthNet.Services.LabTestServices;
 
@@ -38,6 +39,17 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             if (!patientExists)
             {
                 return null!;
+            }
+            // Validate Type using LabTestHelper
+            if (!LabTestHelper.IsValidType(request.Type))
+            {
+                throw new HealthNetException($"Invalid test type. Must be one of: {string.Join(", ", LabTestHelper.ValidTypes)}.");
+            }
+
+            // Validate Date using LabTestHelper
+            if (LabTestHelper.IsFutureDate(request.Date))
+            {
+                throw new HealthNetException("Date cannot be in the future.");
             }
 
             // Map request DTO to LabTest
@@ -83,6 +95,11 @@ public class LaboratoryTestingService : ILaboratoryTestingService
                 TechnicianId = created.TechnicianId,
                 Status = created.Status
             };
+        }
+        // Rethrowing for better error handling in controller
+        catch (HealthNetException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

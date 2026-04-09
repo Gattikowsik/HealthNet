@@ -38,6 +38,14 @@ public class ComplianceRecordService : IComplianceRecordService
         if (!allowedResults.Contains(request.Result.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidResult);
 
+
+        // ── STEP 3: Check for duplicate compliance record ──────
+        var isDuplicate = await _context.ComplianceRecords
+            .AnyAsync(c => c.EntityId == request.EntityId 
+                        && c.Type == request.Type.ToLower());
+        if (isDuplicate)
+            throw new ArgumentException(ComplianceHelper.DuplicateRecord);    
+
         // ── STEP 3: Check if EntityId exists in respective table ───
         bool entityExists = request.Type.ToLower() switch
         {

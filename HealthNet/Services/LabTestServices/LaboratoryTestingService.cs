@@ -4,6 +4,7 @@ using HealthNet.Repository.LabTestRepo;
 using HealthNetDb.Entities;
 using HealthNetDb.Data;
 using Microsoft.EntityFrameworkCore;
+using HealthNet.Utility;
 
 namespace HealthNet.Services.LabTestServices;
 
@@ -39,13 +40,33 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             {
                 return null!;
             }
+            // Validate TechnicianId
+            bool technicianExists = await _laboratoryTestingRepository.TechnicianExistsAsync(request.TechnicianId);
+            if (!technicianExists)
+            {
+                throw new HealthNetException($"Given ID {request.TechnicianId} is not a valid Lab Technician.");
+            }
+            // Check duplicate — same patient, same type, already pending
+            bool duplicateExists = await _laboratoryTestingRepository.DuplicateTestExistsAsync(
+                request.PatientId,
+                request.Type
+            );
+            if (duplicateExists)
+            {
+                throw new HealthNetException($"A pending '{request.Type}' lab test already exists for Patient ID {request.PatientId}.");
+            }
+            // Validate Type using LabTestHelper
+            if (!LabTestHelper.IsValidType(request.Type))
+            {
+                throw new HealthNetException($"Invalid test type. Must be one of: {string.Join(", ", LabTestHelper.GetValidTypes())}.");
+            }
 
             // Map request DTO to LabTest
             var labTest = new LabTest
             {
                 PatientId = request.PatientId,
                 Type = request.Type,
-                Date = request.Date,
+                Date = LabTestHelper.GetUTCDateTime(), // Set to current UTC time
                 TechnicianId = request.TechnicianId,
                 Status = false    // false = Pending by default
             };
@@ -83,6 +104,11 @@ public class LaboratoryTestingService : ILaboratoryTestingService
                 TechnicianId = created.TechnicianId,
                 Status = created.Status
             };
+        }
+        // Rethrowing for better error handling in controller
+        catch (HealthNetException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

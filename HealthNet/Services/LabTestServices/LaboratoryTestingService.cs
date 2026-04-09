@@ -58,7 +58,7 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             // Validate Type using LabTestHelper
             if (!LabTestHelper.IsValidType(request.Type))
             {
-                throw new HealthNetException($"Invalid test type. Must be one of: {string.Join(", ", LabTestHelper.ValidTypes)}.");
+                throw new HealthNetException($"Invalid test type. Must be one of: {string.Join(", ", LabTestHelper.GetValidTypes())}.");
             }
 
             // Map request DTO to LabTest
@@ -66,7 +66,7 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             {
                 PatientId = request.PatientId,
                 Type = request.Type,
-                Date = LabTestHelper.GetISTDateTime(), // Set to current IST datetime
+                Date = LabTestHelper.GetUTCDateTime(), // Set to current UTC time
                 TechnicianId = request.TechnicianId,
                 Status = false    // false = Pending by default
             };

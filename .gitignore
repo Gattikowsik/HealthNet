@@ -70,3 +70,4 @@ efcore.design.*
 
 appsettings.json
 appsettings.*.json
+seed.sql

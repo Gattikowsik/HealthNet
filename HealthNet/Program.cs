@@ -5,6 +5,7 @@ using HealthNet.Repository.ComplianceRecord;
 using HealthNet.Repository.User;
 using HealthNet.Services;
 using HealthNet.Services.LabTestServices;
+using HealthNet.Services.PaginationService;
 using HealthNet.Services.ComplianceRecordServices;
 using HealthNet.Services.UserServices;
 using HealthNetDb.Data;
@@ -24,6 +25,7 @@ builder.Services.AddScoped<ISubmitSymptomReportRepository, SubmitSymptomReportRe
 builder.Services.AddScoped<ISubmitSymptomReportService, SubmitSymptomReportService>();
 builder.Services.AddScoped<ILaboratoryTestingRepository, LaboratoryTestingRepository>();
 builder.Services.AddScoped<ILaboratoryTestingService, LaboratoryTestingService>();
+builder.Services.AddScoped<IPaginationService, PaginationService>();
 builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
 builder.Services.AddScoped<IComplianceRepository, ComplianceRepository>();
 builder.Services.AddDbContext<HealthNetContext>(options =>

@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HealthNetDb.Enums;
 
 namespace HealthNetDb.Entities;
 
@@ -30,5 +31,5 @@ public class Patient
     public string ContactInfo { get; set; } = null!;
 
     [Required]
-    public bool Status { get; set; } 
+    public PatientStatus Status { get; set; } 
 }

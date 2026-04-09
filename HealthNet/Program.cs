@@ -12,6 +12,8 @@ using HealthNetDb.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using HealthNet.Repository.PatientRepository;
+using HealthNet.Services.PatientServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,8 @@ builder.Services.AddScoped<ILaboratoryTestingService, LaboratoryTestingService>(
 builder.Services.AddScoped<IPaginationService, PaginationService>();
 builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
 builder.Services.AddScoped<IComplianceRepository, ComplianceRepository>();
+builder.Services.AddScoped<IPatientManagementRepository,PatientManagementRepository>();
+builder.Services.AddScoped<IPatientManagementService,PatientManagementService>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

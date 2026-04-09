@@ -40,16 +40,25 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             {
                 return null!;
             }
+            // Validate TechnicianId
+            bool technicianExists = await _laboratoryTestingRepository.TechnicianExistsAsync(request.TechnicianId);
+            if (!technicianExists)
+            {
+                throw new HealthNetException($"Given ID {request.TechnicianId} is not a valid Lab Technician.");
+            }
+            // Check duplicate — same patient, same type, already pending
+            bool duplicateExists = await _laboratoryTestingRepository.DuplicateTestExistsAsync(
+                request.PatientId,
+                request.Type
+            );
+            if (duplicateExists)
+            {
+                throw new HealthNetException($"A pending '{request.Type}' lab test already exists for Patient ID {request.PatientId}.");
+            }
             // Validate Type using LabTestHelper
             if (!LabTestHelper.IsValidType(request.Type))
             {
                 throw new HealthNetException($"Invalid test type. Must be one of: {string.Join(", ", LabTestHelper.ValidTypes)}.");
-            }
-
-            // Validate Date using LabTestHelper
-            if (LabTestHelper.IsFutureDate(request.Date))
-            {
-                throw new HealthNetException("Date cannot be in the future.");
             }
 
             // Map request DTO to LabTest
@@ -57,7 +66,7 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             {
                 PatientId = request.PatientId,
                 Type = request.Type,
-                Date = request.Date,
+                Date = LabTestHelper.GetISTDateTime(), // Set to current IST datetime
                 TechnicianId = request.TechnicianId,
                 Status = false    // false = Pending by default
             };

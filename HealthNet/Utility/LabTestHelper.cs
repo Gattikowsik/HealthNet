@@ -12,9 +12,10 @@ public static class LabTestHelper
         return ValidTypes.Contains(type);
     }
 
-    // Checks if the given date is in the future.
-    public static bool IsFutureDate(DateTime date)
+    //Returns current IST datetime.
+    public static DateTime GetISTDateTime()
     {
-        return date > DateTime.UtcNow;
+        var istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, istZone);
     }
 }

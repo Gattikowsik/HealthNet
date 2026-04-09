@@ -37,9 +37,6 @@ public class ComplianceRecordService : IComplianceRecordService
         var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
         if (!allowedResults.Contains(request.Result.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidResult);
- 
-
-
         // ── STEP 3: Check for duplicate compliance record ──────
         var isDuplicate = await _context.ComplianceRecords
             .AnyAsync(c => c.EntityId == request.EntityId 

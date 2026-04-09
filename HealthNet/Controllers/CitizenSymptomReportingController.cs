@@ -29,6 +29,16 @@ namespace HealthNet.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+
+            if (request.Date.Date > DateTime.UtcNow.Date)
+            {
+                ModelState.AddModelError(
+                    nameof(request.Date),
+                    "Symptom date cannot be in the future");
+
+                return BadRequest(ModelState);
+            }
+
             // JSON validation using Utility
             if (!SymptomReportHelper.IsValidJson(request.SymptomsJson))
             {

@@ -70,9 +70,6 @@ efcore.design.*
 
 appsettings.json
 appsettings.*.json
-<<<<<<< HEAD
-=======
 
 # sql files
->>>>>>> Development
 seed.sql

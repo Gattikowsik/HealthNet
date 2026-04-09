@@ -68,6 +68,4 @@ Desktop.ini
 efcore.design.*
 **/Migrations/
 
-appsettings.json
-appsettings.*.json
-HealthNet/appsettings.json
+

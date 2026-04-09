@@ -35,6 +35,7 @@ public class HealthNetContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Users>().HasQueryFilter(u => u.Status==true);
         // Configure Cases -> Users (Citizen)
         // apply cascade onDelete to Citizen
         modelBuilder.Entity<Cases>()
@@ -65,7 +66,7 @@ public class HealthNetContext : DbContext
             .HasOne(al => al.UsersNavigation)
             .WithMany()
             .HasForeignKey(al => al.UserId)
-            .OnDelete(DeleteBehavior.NoAction);  //Keep
+            .OnDelete(DeleteBehavior.Restrict);  //Keep
 
         // Configure AuditLog -> Action
         // Apply Cascade onDelete to Action

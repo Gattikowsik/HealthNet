@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace HealthNet.Controllers
 {
-    [Route("api/v1/Citizen Symptom Reporting")]
+    [Route("api/v1/[Controller]")]
     [ApiController]
     [ProducesResponseType(typeof(SubmitSymptomReportResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -46,6 +46,38 @@ namespace HealthNet.Controllers
 
             // Return 201
             return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+        }
+
+        // <summary>
+        // GetMyReports — gets all symptoms repports submitted by the authenticated citizen
+        // </summary>
+        // <param name="request"> SymptomReportResponse DTO for data transfer from client </param>
+        // Citizen ONLY – View ONLY his own reports
+        [HttpGet("mine")]
+        [Authorize(Roles = "Citizen")]
+        public async Task<IActionResult> GetMyReports(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await _service.GetMineAsync(userId, pageNumber, pageSize);
+            return Ok(result);
+        }
+
+        // <summary>
+        // GetAllReports — gets all symptoms reports in the system (for Doctor/Researcher/Admin)
+        // </summary>
+        // <param name="request"> SymptomReportResponse DTO for data transfer from client </param>
+        //Doctor / Researcher / Admin – View ALL symptom reports
+        [HttpGet]
+        [Authorize(Roles = "Doctor,Researcher,Admin")]
+        public async Task<IActionResult> GetAllReports(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await _service.GetAllAsync(userId, pageNumber, pageSize);
+            return Ok(result);
         }
     }
 }

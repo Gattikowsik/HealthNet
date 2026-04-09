@@ -14,4 +14,5 @@ public interface IUserService
   Task<IEnumerable<UserResponse>> GetAllUsersAsync();
   Task<UserResponse> GetUserByIdAsync(int id);
   Task<UserResponse> UpdateUserAsync(int id, UpdateUserDto dto);
+  Task<UserDeleteResponseDto> DeActivateUserAsync(int id);
 }

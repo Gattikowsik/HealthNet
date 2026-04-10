@@ -68,6 +68,3 @@ Desktop.ini
 efcore.design.*
 **/Migrations/
 
-# Ignore appsettings files
-#appsettings.json
-#appsettings.*.json

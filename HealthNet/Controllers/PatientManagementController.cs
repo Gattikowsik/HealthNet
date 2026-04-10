@@ -25,13 +25,9 @@ namespace HealthNet.Controllers
    // [Authorize(Roles="Doctor")]
     public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchDto searchDto)
     {
-        int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
 
-        var result = await _patientService.SearchPatientsAsync(searchDto,userId);
+        var result = await _patientService.SearchPatientsAsync(searchDto);
         return Ok(result);
     }
     }
-
 }

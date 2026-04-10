@@ -22,7 +22,7 @@ namespace HealthNet.Controllers
             _service = service;
         }
         [HttpPost]
-        [Authorize(Roles = "Citizen")]
+        [Authorize(Roles = "Citizen,Admin")]
         public async Task<IActionResult> Submit([FromBody] SubmitSymptomReportRequestDto request)
         {
             // Model validation (Required fields etc.)

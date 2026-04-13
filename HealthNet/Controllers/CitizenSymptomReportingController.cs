@@ -22,12 +22,22 @@ namespace HealthNet.Controllers
             _service = service;
         }
         [HttpPost]
-        [Authorize(Roles = "Citizen")]
+        [Authorize(Roles = "Citizen,Admin")]
         public async Task<IActionResult> Submit([FromBody] SubmitSymptomReportRequestDto request)
         {
             // Model validation (Required fields etc.)
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+
+            if (request.Date.Date > DateTime.UtcNow.Date)
+            {
+                ModelState.AddModelError(
+                    nameof(request.Date),
+                    "Symptom date cannot be in the future");
+
+                return BadRequest(ModelState);
+            }
 
             // JSON validation using Utility
             if (!SymptomReportHelper.IsValidJson(request.SymptomsJson))

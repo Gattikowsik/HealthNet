@@ -57,4 +57,34 @@ public class LaboratoryTestingRepository : ILaboratoryTestingRepository
             throw new HealthNetException($"An error occurred while creating the lab test. {ex.Message}");
         }
     }
+
+    public async Task<bool> TechnicianExistsAsync(int technicianId)
+    {
+        try
+        {
+            return await _context.Userss
+                .Include(u => u.RoleNavigation)
+                .AnyAsync(u => u.UserId == technicianId &&
+                               u.RoleNavigation!.RoleName == "Lab Technician");
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while validating technician. {ex.Message}");
+        }
+    }
+
+    public async Task<bool> DuplicateTestExistsAsync(int patientId, string type)
+    {
+        try
+        {
+            return await _context.LabTests
+                .AnyAsync(lt => lt.PatientId == patientId &&
+                                lt.Type == type &&
+                                lt.Status == false);    // false = Pending
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while checking duplicate lab test. {ex.Message}");
+        }
+    }
 }

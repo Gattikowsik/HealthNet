@@ -23,13 +23,16 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
     public async Task<PagedResponseDto<SymptomReportResponseDto>> GetAllAsync(int userId, int pageNumber, int pageSize)
     {
         var query = _context.SymptomReports
-                        .OrderByDescending(r => r.Date)
+                        .Include(r => r.Citizen)
+                        .OrderBy(r => r.ReportId)
                         .Select(r => new SymptomReportResponseDto
                         {
                             ReportId = r.ReportId,
+                            CitizenId = r.CitizenId,
+                            CitizenName = r.Citizen.Name,
                             SymptomsJson = r.SymptomsJson,
                             Date = r.Date,
-                            Status = r.Status
+                            Status = r.Status.ToString()
                         });
         var result = await _paginationService.PaginateAsync(query, pageNumber, pageSize);
 
@@ -56,13 +59,13 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
     {
         var query = _context.SymptomReports
                         .Where(r => r.CitizenId == userId)
-                        .OrderByDescending(r => r.Date)
+                        .OrderBy(r => r.ReportId)
                         .Select(r => new SymptomReportResponseDto
                         {
                             ReportId = r.ReportId,
                             SymptomsJson = r.SymptomsJson,
                             Date = r.Date,
-                            Status = r.Status
+                            Status = r.Status.ToString()
                         });
         var result = await _paginationService.PaginateAsync(query, pageNumber, pageSize);
 

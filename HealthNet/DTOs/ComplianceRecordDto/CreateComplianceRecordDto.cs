@@ -11,7 +11,5 @@ public class CreateComplianceRecordDto
     // What was the outcome? e.g. "resolved", "pending", "non-compliant"
     public string Result { get; set; } = null!;
     // When was this compliance check done?
-    public DateTime Date { get; set; }
-    // Any extra details the officer wants to note
     public string Notes { get; set; } = null!;
 }

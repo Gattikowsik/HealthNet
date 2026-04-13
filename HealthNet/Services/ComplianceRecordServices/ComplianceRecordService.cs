@@ -37,8 +37,14 @@ public class ComplianceRecordService : IComplianceRecordService
         var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
         if (!allowedResults.Contains(request.Result.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidResult);
+        // ── STEP 3: Check for duplicate compliance record ──────
+        var isDuplicate = await _context.ComplianceRecords
+            .AnyAsync(c => c.EntityId == request.EntityId 
+                        && c.Type == request.Type.ToLower());
+        if (isDuplicate)
+            throw new ArgumentException(ComplianceHelper.DuplicateRecord);    
 
-        // ── STEP 3: Check if EntityId exists in respective table ───
+        // ── STEP 4: Check if EntityId exists in respective table ───
         bool entityExists = request.Type.ToLower() switch
         {
             "case" => await _context.Casess.AnyAsync(c => c.CaseId == request.EntityId),
@@ -51,10 +57,10 @@ public class ComplianceRecordService : IComplianceRecordService
 
         try
         {
-            // ── STEP 4: Save the compliance record ─────────────────
+            // ── STEP 5: Save the compliance record ─────────────────
             var result = await _repository.CreateComplianceRecordAsync(request);
 
-            // ── STEP 5: Log to AuditLog ────────────────────────────
+            // ── STEP 6: Log to AuditLog ────────────────────────────
             // ActionId = 2 because "Create" is the second action in the Action table
             // Resource is hardcoded as "ComplianceRecord"
             var actionId = await _context
@@ -63,8 +69,8 @@ public class ComplianceRecordService : IComplianceRecordService
                 .Select(a => a.ActionId)
                 .FirstAsync();
 
-            // ── STEP 6: Log to AuditLog ────────────────────────────
-            var auditLog = new AuditLog
+            // ── STEP 7: Log to AuditLog ────────────────────────────
+            var auditLog = new HealthNetDb.Entities.AuditLog
             {
                 UserId = userId,
                 ActionId = actionId,
@@ -74,7 +80,7 @@ public class ComplianceRecordService : IComplianceRecordService
             _context.AuditLogs.Add(auditLog);
             await _context.SaveChangesAsync();
 
-            // ── STEP 7: Return the ComplianceId ────────────────────
+            // ── STEP 8: Return the ComplianceId ────────────────────
             return result;
         }
         catch

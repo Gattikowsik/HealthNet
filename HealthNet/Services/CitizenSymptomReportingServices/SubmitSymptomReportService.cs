@@ -33,11 +33,17 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
                         });
         var result = await _paginationService.PaginateAsync(query, pageNumber, pageSize);
 
-        // AUDIT LOG (READ)
+        // FETCH READ ACTION ID dynamically
+        var readActionId = await _context.Actions
+            .Where(a => a.ActionName == "READ")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        // AUDIT LOG ENTRY
         var auditLog = new AuditLog
         {
             UserId = userId,
-            ActionId = 3,               // READ
+            ActionId = readActionId,     // dynamic, not hardcoded
             Resource = "SymptomReport",
             Timestamp = DateTime.UtcNow
         };
@@ -60,11 +66,17 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
                         });
         var result = await _paginationService.PaginateAsync(query, pageNumber, pageSize);
 
-        // AUDIT LOG (READ)
+        // FETCH READ ACTION ID dynamically
+        var readActionId = await _context.Actions
+            .Where(a => a.ActionName == "READ")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        // AUDIT LOG ENTRY
         var auditLog = new AuditLog
         {
             UserId = userId,
-            ActionId = 3,               // READ
+            ActionId = readActionId,     // dynamic, not hardcoded
             Resource = "SymptomReport",
             Timestamp = DateTime.UtcNow
         };
@@ -75,6 +87,20 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
 
     public async Task<SubmitSymptomReportResponseDto> SubmitAsync(SubmitSymptomReportRequestDto request, int citizenId)
     {
+        // Duplicate check (block until CLOSED)
+        var existingActiveReport = await _context.SymptomReports
+            .Where(r =>
+                r.CitizenId == citizenId &&
+                r.SymptomsJson == request.SymptomsJson &&
+                r.Date.Date == request.Date.Date &&
+                r.Status != SymptomStatus.Closed)
+            .FirstOrDefaultAsync();
+
+        if (existingActiveReport != null)
+        {
+            throw new InvalidOperationException(
+                "A symptom report with the same details already exists and is not closed.");
+        }
         var report = new SymptomReport
         {
             CitizenId = citizenId,

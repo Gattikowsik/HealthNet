@@ -18,7 +18,7 @@ public class SymptomReport
     public int ReportId { get; set; }
 
     [ForeignKey(nameof(Citizen))]
-    public int CitizenId { get; set; }      //Foreign Key from Users table
+    public int? CitizenId { get; set; }      //Foreign Key from Users table
     public Users Citizen { get; set; } = null!;   //Navigation Property
 
     [MaxLength]

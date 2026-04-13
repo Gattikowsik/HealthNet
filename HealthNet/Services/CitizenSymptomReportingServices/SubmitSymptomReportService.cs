@@ -37,7 +37,7 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         var auditLog = new AuditLog
         {
             UserId = userId,
-            ActionId = 3,               // READ
+            ActionId = 7,               // READ
             Resource = "SymptomReport",
             Timestamp = DateTime.UtcNow
         };
@@ -64,7 +64,7 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         var auditLog = new AuditLog
         {
             UserId = userId,
-            ActionId = 3,               // READ
+            ActionId = 7,               // READ
             Resource = "SymptomReport",
             Timestamp = DateTime.UtcNow
         };

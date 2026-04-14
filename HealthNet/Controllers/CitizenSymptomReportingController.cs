@@ -29,13 +29,10 @@ namespace HealthNet.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-
-            if (request.Date.Date > DateTime.UtcNow.Date)
+            var today = DateTime.UtcNow.Date;
+            if (request.Date.Date != today)
             {
-                ModelState.AddModelError(
-                    nameof(request.Date),
-                    "Symptom date cannot be in the future");
-
+                ModelState.AddModelError(nameof(request.Date), "Symptom date must be today's date.");
                 return BadRequest(ModelState);
             }
 
@@ -52,10 +49,21 @@ namespace HealthNet.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             //Call service
-            var response = await _service.SubmitAsync(request, citizenId);
-
-            // Return 201
-            return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+            try
+            {
+                var response = await _service.SubmitAsync(request, citizenId);
+                return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    errors = new
+                    {
+                        SymptomReport = new[] { ex.Message }
+                    }
+                });
+            }
         }
 
         // <summary>

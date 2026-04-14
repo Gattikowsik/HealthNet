@@ -4,6 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthNetDb.Entities;
 
+public enum SymptomStatus
+{
+    Submitted = 1,
+    UnderReview = 2,
+    Reviewed = 3,
+    Closed = 4
+}
 [Table("SymptomReport")]
 public class SymptomReport
 {
@@ -22,5 +29,5 @@ public class SymptomReport
     public DateTime Date { get; set; }
 
     [Required]
-    public bool Status { get; set; }
+    public SymptomStatus Status { get; set; }
 }

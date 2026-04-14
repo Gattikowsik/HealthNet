@@ -21,4 +21,8 @@ public class ComplianceHelper
 
     // If something unexpected goes wrong
     public const string GenericError = "Something went wrong. Please try again.";
+    // If a compliance record already exists for the same EntityId and Type
+    public const string DuplicateRecord = "A compliance record already exists for this entity.";
 }
+
+

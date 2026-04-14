@@ -80,7 +80,7 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
             CitizenId = citizenId,
             SymptomsJson = request.SymptomsJson,
             Date = request.Date,
-            Status = true
+            Status = SymptomStatus.Submitted
         };
         var saved = await _repository.AddAsync(report);
 

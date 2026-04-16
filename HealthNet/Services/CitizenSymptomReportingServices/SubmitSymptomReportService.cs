@@ -20,37 +20,67 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         _paginationService = paginationService;
     }
 
-    public async Task<PagedResponseDto<SymptomReportResponseDto>> GetAllAsync(int userId, int pageNumber, int pageSize)
+    public async Task<PagedResponseDto<SymptomReportResponseDto>> GetAllAsync(int userId, int? citizenId, DateTime? reportDate, SymptomStatus? status, int pageNumber, int pageSize)
     {
-        var query = _context.SymptomReports
-                        .Include(r => r.Citizen)
-                        .OrderBy(r => r.ReportId)
-                        .Select(r => new SymptomReportResponseDto
-                        {
-                            ReportId = r.ReportId,
-                            CitizenId = r.CitizenId,
-                            CitizenName = r.Citizen.Name,
-                            SymptomsJson = r.SymptomsJson,
-                            Date = r.Date,
-                            Status = r.Status.ToString()
-                        });
+        // If citizenId filter is provided, validate citizen existence
+        if (citizenId.HasValue)
+        {
+            var citizenExists = await _context.Userss
+                .AnyAsync(u => u.UserId == citizenId.Value);
+
+            if (!citizenExists)
+                throw new KeyNotFoundException("No such citizen exists.");
+        }
+        var baseQuery = _context.SymptomReports
+            .Include(r => r.Citizen)
+            .AsQueryable();
+
+        //  FILTERS (entity level)
+        if (citizenId.HasValue)
+            baseQuery = baseQuery.Where(r => r.CitizenId == citizenId.Value);
+
+        if (reportDate.HasValue)
+            baseQuery = baseQuery.Where(r => r.Date.Date == reportDate.Value.Date);
+
+        if (status.HasValue && Enum.IsDefined(typeof(SymptomStatus), status.Value))
+            baseQuery = baseQuery.Where(r => r.Status == status.Value);
+
+        //  PROJECTION AFTER FILTERING
+        var query = baseQuery
+            .OrderBy(r => r.ReportId)
+            .Select(r => new SymptomReportResponseDto
+            {
+                ReportId = r.ReportId,
+                CitizenId = r.CitizenId,
+                CitizenName = r.Citizen.Name,
+                SymptomsJson = r.SymptomsJson,
+                Date = r.Date,
+                Status = r.Status.ToString()
+            });
+
+        //  PAGINATION LAST
         var result = await _paginationService.PaginateAsync(query, pageNumber, pageSize);
 
-        // FETCH READ ACTION ID dynamically
+        if (result.TotalRecords == 0)
+        {
+            result.Message = "No symptom reports found for the given filter criteria.";
+        }
+
+
+        //  AUDIT LOG
         var readActionId = await _context.Actions
             .Where(a => a.ActionName == "READ")
             .Select(a => a.ActionId)
             .FirstAsync();
 
-        // AUDIT LOG ENTRY
-        var auditLog = new AuditLog
+        _context.AuditLogs.Add(new AuditLog
         {
             UserId = userId,
-            ActionId = readActionId,     // dynamic, not hardcoded
+            ActionId = readActionId,
             Resource = "SymptomReport",
             Timestamp = DateTime.UtcNow
-        };
-        _context.AuditLogs.Add(auditLog);
+        });
+
         await _context.SaveChangesAsync();
         return result;
     }

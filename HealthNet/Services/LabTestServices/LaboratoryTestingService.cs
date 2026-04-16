@@ -61,11 +61,13 @@ public class LaboratoryTestingService : ILaboratoryTestingService
                 throw new HealthNetException($"Invalid test type. Must be one of: {string.Join(", ", LabTestHelper.GetValidTypes())}.");
             }
 
+            string normalizedType = LabTestHelper.NormalizeType(request.Type);
+
             // Map request DTO to LabTest
             var labTest = new LabTest
             {
                 PatientId = request.PatientId,
-                Type = request.Type,
+                Type = LabTestHelper.NormalizeType(request.Type),
                 Date = LabTestHelper.GetUTCDateTime(), // Set to current UTC time
                 TechnicianId = request.TechnicianId,
                 Status = false    // false = Pending by default

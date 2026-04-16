@@ -29,7 +29,7 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
                 .AnyAsync(u => u.UserId == citizenId.Value);
 
             if (!citizenExists)
-                throw new KeyNotFoundException("No such citizen exists.");
+                throw new HealthNetException("No such citizen exists.");
         }
         var baseQuery = _context.SymptomReports
             .Include(r => r.Citizen)

@@ -9,5 +9,6 @@ public interface ISubmitSymptomReportService
 {
     Task<SubmitSymptomReportResponseDto> SubmitAsync(SubmitSymptomReportRequestDto request, int citizenId);
     Task<PagedResponseDto<SymptomReportResponseDto>>GetMineAsync(int userId, int pageNumber, int pageSize);
-    Task<PagedResponseDto<SymptomReportResponseDto>>GetAllAsync(int userId, int pageNumber, int pageSize);
+    Task<PagedResponseDto<SymptomReportResponseDto>>GetAllAsync(int userId, int? citizenId, DateTime? reportDate, 
+        SymptomStatus? status, int pageNumber, int pageSize);
 }

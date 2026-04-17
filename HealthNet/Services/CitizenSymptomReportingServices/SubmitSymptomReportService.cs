@@ -168,4 +168,38 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
             ReportId = saved.ReportId
         };
     }
+    public async Task<bool> UpdateStatusAsync(int reportId, SymptomStatus newStatus, int userId)
+    {
+        // ❗ Validate status
+        if (!Enum.IsDefined(typeof(SymptomStatus), newStatus))
+            throw new ArgumentException("Invalid status value.");
+
+        var report = await _context.SymptomReports
+            .FirstOrDefaultAsync(r => r.ReportId == reportId);
+
+        if (report == null)
+            return false;
+
+        report.Status = newStatus;
+
+        // AUDIT LOG: UPDATE
+        var updateActionId = await _context.Actions
+            .Where(a => a.ActionName == "UPDATE")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        var auditLog = new AuditLog
+        {
+            UserId = userId,
+            ActionId = updateActionId,
+            Resource = "SymptomReport",
+            Timestamp = DateTime.UtcNow
+        };
+
+        _context.AuditLogs.Add(auditLog);
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
 }

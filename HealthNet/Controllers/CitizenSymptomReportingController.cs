@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using HealthNet.DTOs;
+using HealthNet.DTOs.CitizenSymptomReportingDTO;
 using HealthNet.Services;
 using HealthNet.Utility;
 using HealthNetDb.Entities;
@@ -112,6 +113,31 @@ namespace HealthNet.Controllers
                 {
                     message = ex.Message
                 });
+            }
+        }
+        // <summary>
+        // UpdateStatusAsync — updates the status for the symptom report (for Doctor/Public Health Officer/Admin)
+        // </summary>
+        // <param name="request"> UpdateSymptomStatusRequest DTO for data transfer from client </param>
+        //Doctor / Public Health Officer / Admin – View ALL symptom reports
+        [HttpPatch("{id}")]
+        [Authorize(Roles = "Doctor,Public Health Officer,Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, UpdateSymptomStatusRequestDto request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                var updated = await _service.UpdateStatusAsync(id, request.Status, userId);
+
+                if (!updated)
+                    return NotFound("Symptom report not found.");
+
+                return Ok("Status updated successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);  // "Invalid status value"
             }
         }
     }

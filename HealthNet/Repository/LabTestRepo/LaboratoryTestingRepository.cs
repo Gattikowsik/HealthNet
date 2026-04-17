@@ -1,6 +1,7 @@
 using System;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
+using HealthNet.DTOs.LabTestDTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthNet.Repository.LabTestRepo;
@@ -85,6 +86,41 @@ public class LaboratoryTestingRepository : ILaboratoryTestingRepository
         catch (Exception ex)
         {
             throw new HealthNetException($"An error occurred while checking duplicate lab test. {ex.Message}");
+        }
+    }
+    /// <summary>
+    /// Fetches lab tests based on provided filters (Type, Status, Date).
+    /// </summary>
+    /// <param name="filter"></param>
+    /// <param name="statusBool"></param>
+    /// <returns>A list of lab tests matching the criteria.</returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<IEnumerable<LabTest>> GetLabTestsAsync(LaboratoryTestingFilterRequest filter, bool? statusBool)
+    {
+        try
+        {
+            var query = _context.LabTests.AsQueryable();
+            // Apply Type filter if provided
+            if (!string.IsNullOrWhiteSpace(filter.Type))
+            {
+                query = query.Where(lt => lt.Type == filter.Type);
+            }
+            // Apply Status filter if provided
+            if (statusBool.HasValue)
+            {
+                query = query.Where(lt => lt.Status == statusBool.Value);
+            }
+            // Apply Date filter if provided
+            if (filter.Date.HasValue)
+            {
+                var date = filter.Date.Value.ToDateTime(TimeOnly.MinValue);
+                query = query.Where(lt => lt.Date.Date == date.Date);
+            }
+            return await query.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while fetching lab tests. {ex.Message}");
         }
     }
 }

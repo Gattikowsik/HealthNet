@@ -14,6 +14,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using HealthNet.Repository.PatientRepository;
 using HealthNet.Services.PatientServices;
+using HealthNet.Services.OutbreakMonitoringServices;
+using HealthNet.Repository.OutbreakMonitoringRepository;
+using HealthNetDb.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +35,8 @@ builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
 builder.Services.AddScoped<IComplianceRepository, ComplianceRepository>();
 builder.Services.AddScoped<IPatientManagementRepository,PatientManagementRepository>();
 builder.Services.AddScoped<IPatientManagementService,PatientManagementService>();
+builder.Services.AddScoped<IOutbreakMonitoringServices,OutbreakMonitoringServices>();
+builder.Services.AddScoped<IOutBreakMonitoringRepository,OutbreakMonitoringRepository>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

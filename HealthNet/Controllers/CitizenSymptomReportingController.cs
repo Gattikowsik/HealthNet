@@ -90,12 +90,29 @@ namespace HealthNet.Controllers
         [HttpGet]
         [Authorize(Roles = "Doctor,Researcher,Admin")]
         public async Task<IActionResult> GetAllReports(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
+        [FromQuery] int? citizenId,
+        [FromQuery] DateTime? reportDate,
+        [FromQuery] SymptomStatus? status,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await _service.GetAllAsync(userId, pageNumber, pageSize);
-            return Ok(result);
+            try
+            {
+                var userId = int.Parse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                var result = await _service.GetAllAsync(
+                    userId, citizenId, reportDate, status, pageNumber, pageSize);
+
+                return Ok(result);
+            }
+            catch (HealthNetException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
         }
     }
 }

@@ -4,6 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthNetDb.Entities;
 
+public enum SymptomStatus
+{
+    Submitted = 1,
+    UnderReview = 2,
+    Reviewed = 3,
+    Closed = 4
+}
 [Table("SymptomReport")]
 public class SymptomReport
 {
@@ -11,7 +18,7 @@ public class SymptomReport
     public int ReportId { get; set; }
 
     [ForeignKey(nameof(Citizen))]
-    public int CitizenId { get; set; }      //Foreign Key from Users table
+    public int? CitizenId { get; set; }      //Foreign Key from Users table
     public Users Citizen { get; set; } = null!;   //Navigation Property
 
     [MaxLength]
@@ -22,5 +29,5 @@ public class SymptomReport
     public DateTime Date { get; set; }
 
     [Required]
-    public bool Status { get; set; }
+    public SymptomStatus Status { get; set; }
 }

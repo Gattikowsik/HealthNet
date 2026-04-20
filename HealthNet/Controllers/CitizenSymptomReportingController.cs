@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using HealthNet.DTOs;
+using HealthNet.DTOs.CitizenSymptomReportingDTO;
 using HealthNet.Services;
 using HealthNet.Utility;
 using HealthNetDb.Entities;
@@ -22,12 +23,19 @@ namespace HealthNet.Controllers
             _service = service;
         }
         [HttpPost]
-        [Authorize(Roles = "Citizen")]
+        [Authorize(Roles = "Citizen,Admin")]
         public async Task<IActionResult> Submit([FromBody] SubmitSymptomReportRequestDto request)
         {
             // Model validation (Required fields etc.)
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            var today = DateTime.UtcNow.Date;
+            if (request.Date.Date != today)
+            {
+                ModelState.AddModelError(nameof(request.Date), "Symptom date must be today's date.");
+                return BadRequest(ModelState);
+            }
 
             // JSON validation using Utility
             if (!SymptomReportHelper.IsValidJson(request.SymptomsJson))
@@ -42,10 +50,21 @@ namespace HealthNet.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             //Call service
-            var response = await _service.SubmitAsync(request, citizenId);
-
-            // Return 201
-            return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+            try
+            {
+                var response = await _service.SubmitAsync(request, citizenId);
+                return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    errors = new
+                    {
+                        SymptomReport = new[] { ex.Message }
+                    }
+                });
+            }
         }
 
         // <summary>
@@ -72,12 +91,54 @@ namespace HealthNet.Controllers
         [HttpGet]
         [Authorize(Roles = "Doctor,Researcher,Admin")]
         public async Task<IActionResult> GetAllReports(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
+        [FromQuery] int? citizenId,
+        [FromQuery] DateTime? reportDate,
+        [FromQuery] SymptomStatus? status,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await _service.GetAllAsync(userId, pageNumber, pageSize);
-            return Ok(result);
+            try
+            {
+                var userId = int.Parse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                var result = await _service.GetAllAsync(
+                    userId, citizenId, reportDate, status, pageNumber, pageSize);
+
+                return Ok(result);
+            }
+            catch (HealthNetException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+        // <summary>
+        // UpdateStatusAsync — updates the status for the symptom report (for Doctor/Public Health Officer/Admin)
+        // </summary>
+        // <param name="request"> UpdateSymptomStatusRequest DTO for data transfer from client </param>
+        //Doctor / Public Health Officer / Admin – View ALL symptom reports
+        [HttpPatch("{id}")]
+        [Authorize(Roles = "Doctor,Public Health Officer,Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, UpdateSymptomStatusRequestDto request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                var updated = await _service.UpdateStatusAsync(id, request.Status, userId);
+
+                if (!updated)
+                    return NotFound("Symptom report not found.");
+
+                return Ok("Status updated successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);  // "Invalid status value"
+            }
         }
     }
 }

@@ -68,8 +68,6 @@ Desktop.ini
 efcore.design.*
 **/Migrations/
 
-appsettings.json
-appsettings.*.json
 
 # sql files
 seed.sql

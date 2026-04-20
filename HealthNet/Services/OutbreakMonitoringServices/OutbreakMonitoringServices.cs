@@ -11,11 +11,11 @@ namespace HealthNet.Services.OutbreakMonitoringServices;
 public class OutbreakMonitoringServices : IOutbreakMonitoringServices
 {
     private readonly IOutBreakMonitoringRepository _repository;
-    private readonly HealthNetContext _context;
-    public OutbreakMonitoringServices(IOutBreakMonitoringRepository repository, HealthNetContext context)
+    private readonly LocationHelper _locationHelper;
+    public OutbreakMonitoringServices(IOutBreakMonitoringRepository repository, LocationHelper locationHelper)
     {
         _repository = repository;
-        _context = context;
+        _locationHelper = locationHelper;
     } 
 
     // Add Outbreak Service
@@ -76,8 +76,8 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                     Message = "Location must be of atleast 3 Characters length."
                 };
             }
-            var validator = new LocationHelper(new HttpClient());
-            bool isValidLocation = await validator.LocationValidatorAsync(request.Location);
+            
+            bool isValidLocation = await _locationHelper.LocationValidatorAsync(request.Location);
             if (!isValidLocation)
             {
                 return new CreateOutbreakResponseDto
@@ -127,16 +127,11 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
 
             // Return Outbreak with Success message for valid Data.
             int outbreakid = await _repository.AddOutbreakAsync(request);
+
             // Record it in Audit Log if Every thing works well
-            AuditLog auditLog = new AuditLog()
-            {
-                UserId = userId,
-                ActionId = await ActionHelper.GetActionIdByNameAsync("Create"),
-                Resource = "Outbreak",
-                Timestamp = DateTime.UtcNow
-            };
-            await _context.AuditLogs.AddAsync(auditLog);
-            await _context.SaveChangesAsync();
+            await _repository.AddAuditLogAsync(userId, "Outbreak");
+
+            // Return the result 
             return new CreateOutbreakResponseDto
             {
                 Success = true,

@@ -65,4 +65,25 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
         }
     }
 
+    public async Task<int> AddAuditLogAsync(int userId, string resource)
+    {
+        try
+        {
+            int actionId = await (from a in _context.Actions where a.ActionName=="Create" select a.ActionId).FirstAsync();
+            AuditLog auditLog = new AuditLog()
+            {
+                UserId = userId,
+                ActionId = actionId,
+                Resource = resource,
+                Timestamp = DateTime.UtcNow
+            };
+            await _context.AuditLogs.AddAsync(auditLog);
+            await _context.SaveChangesAsync();
+            return auditLog.AuditId;
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException("An Error occured while Logging Outbreak to Audit. "+ex.Message);
+        }
+    }
 }

@@ -7,4 +7,5 @@ public interface IOutBreakMonitoringRepository
 {
     Task<int> AddOutbreakAsync(CreateOutbreakRequestDto request);
     Task<bool> DuplicateOutbreakExitsAsync(CreateOutbreakRequestDto request);
+    Task<int> AddAuditLogAsync(int userId, string resource);
 }

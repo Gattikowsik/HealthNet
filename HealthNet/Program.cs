@@ -17,6 +17,7 @@ using HealthNet.Services.PatientServices;
 using HealthNet.Services.OutbreakMonitoringServices;
 using HealthNet.Repository.OutbreakMonitoringRepository;
 using HealthNetDb.Entities;
+using HealthNet.Utility;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IPatientManagementRepository,PatientManagementReposit
 builder.Services.AddScoped<IPatientManagementService,PatientManagementService>();
 builder.Services.AddScoped<IOutbreakMonitoringServices,OutbreakMonitoringServices>();
 builder.Services.AddScoped<IOutBreakMonitoringRepository,OutbreakMonitoringRepository>();
+builder.Services.AddHttpClient<LocationHelper>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HealthNet.Controllers
 {
-    [Route("api/outbreaks")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin,Doctor,Public Health Officer")]
     public class OutbreakMonitoringController : ControllerBase
@@ -33,12 +33,12 @@ namespace HealthNet.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int userId = int.Parse(userIdClaim!);
-            var response = await _outbreakMonitoringServices.AddOutbreakService(userId, request);
+            var response = await _outbreakMonitoringServices.AddOutbreakService(userId,request);
             if (!response.Success || response == null)
             {
                 return BadRequest(response?.Message);
             }
-            return Created($"/api/outbreaks/{response.OutbreakId}", new
+            return Created($"/api/v1/[controller]/{response.OutbreakId}", new
             {
                 message = response.Message,
                 OutbreakId = response.OutbreakId

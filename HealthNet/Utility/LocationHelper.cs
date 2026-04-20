@@ -6,16 +6,23 @@ namespace HealthNet.Utility;
 public class LocationHelper
 {
     private readonly HttpClient _httpClient;
-
-    public LocationHelper(HttpClient httpClient)
+    private readonly IConfiguration _configuration;
+    public LocationHelper(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
 
         if (!_httpClient.DefaultRequestHeaders.UserAgent.Any())
         {
+            // string cred = "HealthNetApp "+_configuration["LogDetails:Email"];
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
-                "HealthNetApp (patelpranay577@gmail.com)"
+                "HealthNetApp/1.0"
             );
+
+            _httpClient.DefaultRequestHeaders.Add(
+                    "Contact-Email",
+                    configuration["LogDetails:Email"]
+                );
         }
     }
 

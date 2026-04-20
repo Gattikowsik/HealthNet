@@ -23,6 +23,10 @@ public class ComplianceHelper
     public const string GenericError = "Something went wrong. Please try again.";
     // If a compliance record already exists for the same EntityId and Type
     public const string DuplicateRecord = "A compliance record already exists for this entity.";
+    // If no compliance records are found for the given filters
+    public const string NoRecordsFound = "No compliance records found for the given filters.";
+    // If no filters are provided at all
+    public const string NoFiltersProvided = "Please provide at least one filter to search.";
 }
 
 

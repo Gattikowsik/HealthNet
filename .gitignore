@@ -68,3 +68,9 @@ Desktop.ini
 efcore.design.*
 **/Migrations/
 
+<<<<<<< HEAD
+
+# sql files
+seed.sql
+=======
+>>>>>>> 1212c58bd54a84469dcbed0b6fb3117b3ff26e8c

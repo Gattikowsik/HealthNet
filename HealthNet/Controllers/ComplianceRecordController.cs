@@ -15,16 +15,14 @@ namespace HealthNet.Controllers
     [Authorize(Roles = "Compliance Officer")]
     public class ComplianceRecordController : ControllerBase
     {
-        private readonly HealthNetContext _context;
         private readonly IComplianceRecordService _complianceRecordService;
         /// <summary>
         /// Constructor for initializing fields
         /// </summary>
         /// <param name="context">This is used to access the database context </param>
         /// <param name="complianceRecordService">This is the service for handling compliance record operations </param>
-        public ComplianceRecordController(HealthNetContext context, IComplianceRecordService complianceRecordService)
+        public ComplianceRecordController(IComplianceRecordService complianceRecordService)
         {
-            _context = context;
             _complianceRecordService = complianceRecordService;
         }
 
@@ -56,6 +54,36 @@ namespace HealthNet.Controllers
             catch
             {
                 return StatusCode(500, ComplianceHelper.GenericError);
+            }
+        }
+
+        /// <summary>
+        /// Endpoint to search compliance records by filters.Only accessible by users with the "Compliance Officer" role.
+        /// </summary>
+        /// <param name="filter">The DTO containing optional filter parameters </param>
+        /// <returns> Filtered list of compliance records </returns>
+        [HttpGet]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetComplianceRecordsAsync([FromQuery] ComplianceRecordFilterDto filter)
+        {
+            try
+            {
+                var result = await _complianceRecordService.GetAllComplianceRecordsAsync(filter);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);  // 400 — no filters / invalid type / invalid result
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);    // 404 — no records found
+            }
+            catch
+            {
+                return StatusCode(500, ComplianceHelper.GenericError); // 500 — unexpected error
             }
         }
     }

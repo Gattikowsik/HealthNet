@@ -2,6 +2,7 @@ using System;
 using HealthNet.DTOs.ComplianceRecordDto;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
+using Microsoft.EntityFrameworkCore;
 namespace HealthNet.Repository.ComplianceRecord;
 
 public class ComplianceRepository : IComplianceRepository
@@ -28,8 +29,6 @@ public class ComplianceRepository : IComplianceRepository
             Notes = request.Notes
         };
 
-        
-
         // Save to DB — EF Core generates the ComplianceId after this
         _context.ComplianceRecords.Add(record);
         await _context.SaveChangesAsync();
@@ -39,5 +38,42 @@ public class ComplianceRepository : IComplianceRepository
         {
             ComplianceId = record.ComplianceId
         };
+    }
+
+    /// <summary>
+    /// Returns a filtered list of compliance records.
+    /// </summary>
+    /// <param name="filter">The DTO containing optional filter parameters.</param>
+    /// <returns>List of ComplianceRecordListDto matching the filters.</returns>
+    public async Task<IEnumerable<ComplianceRecordListDto>> GetComplianceRecordsAsync(ComplianceRecordFilterDto filter)
+    {
+        // Start with all records
+        // IQueryable means nothing hits the DB yet — just building the query
+        var query = _context.ComplianceRecords.AsQueryable();
+
+        // Apply each filter only if it was provided by the user
+        if (filter.EntityId.HasValue)
+            query = query.Where(c => c.EntityId == filter.EntityId.Value);
+
+        if (!string.IsNullOrWhiteSpace(filter.Type))
+            query = query.Where(c => c.Type == filter.Type.ToLower());
+
+        if (!string.IsNullOrWhiteSpace(filter.Result))
+            query = query.Where(c => c.Result == filter.Result.ToLower());
+
+        if (filter.Date.HasValue)
+            query = query.Where(c => c.Date.Date == filter.Date.Value.Date);
+
+        // THIS is where the actual SQL hits the DB
+        // Map each entity to the list DTO
+        return await query.Select(c => new ComplianceRecordListDto
+        {
+            ComplianceId = c.ComplianceId,
+            EntityId     = c.EntityId,
+            Type         = c.Type,
+            Result       = c.Result,
+            Date         = c.Date,
+            Notes        = c.Notes
+        }).ToListAsync();
     }
 }

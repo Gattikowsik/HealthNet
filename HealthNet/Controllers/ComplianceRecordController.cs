@@ -12,7 +12,7 @@ namespace HealthNet.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Compliance Officer, Admin")]
+    [Authorize(Roles = $"{Roles.ComplianceOfficer}, {Roles.Admin}")]
     public class ComplianceRecordController : ControllerBase
     {
         private readonly IComplianceRecordService _complianceRecordService;

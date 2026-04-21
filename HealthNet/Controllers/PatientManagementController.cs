@@ -31,12 +31,11 @@ namespace HealthNet.Controllers
     }
     
    [HttpPost]
-    public async Task<IActionResult> RegisterPatient(
-        [FromBody] RegisterPatientRequestDto dto)
+    public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientRequestDto dto)
     {
-        // ✅ Required fields missing → 400
-      //  if (!ModelState.IsValid)
-        //    return BadRequest(ModelState);
+        //✅ Required fields missing → 400
+       if (!ModelState.IsValid)
+           return BadRequest(ModelState);
 
         var response = await _patientService.RegisterPatientAsync(dto);
 

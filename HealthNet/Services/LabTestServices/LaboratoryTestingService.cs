@@ -117,4 +117,83 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             throw new HealthNetException($"An error occurred while creating the lab test. {ex.Message}");
         }
     }
+    public async Task<IEnumerable<LaboratoryTestingResponse>> GetLabTestsAsync(LaboratoryTestingFilterRequest filter, int userId)
+    {
+        try
+        {
+            // Validate Type if provided
+            if (!string.IsNullOrWhiteSpace(filter.Type))
+            {
+                if (!LabTestHelper.IsValidType(filter.Type))
+                {
+                    throw new HealthNetException(LabTestHelper.InvalidTypeMessage);
+                }
+            }
+
+            // Validate Status if provided
+            if (!string.IsNullOrWhiteSpace(filter.Status))
+            {
+                if (!LabTestHelper.IsValidStatus(filter.Status))
+                {
+                    throw new HealthNetException(LabTestHelper.InvalidStatusMessage);
+                }
+            }
+
+            // Validate Date if provided
+            if (filter.Date.HasValue)
+            {
+                if (LabTestHelper.IsFutureDate(filter.Date.Value))
+                {
+                    throw new HealthNetException(LabTestHelper.FutureDateMessage);
+                }
+            }
+
+            // Convert Status string to bool for DB query
+            bool? statusBool = filter.Status switch
+            {
+                "Pending" => false,
+                "Completed" => true,
+                _ => null
+            };
+
+            // Fetch filtered results
+            var labTests = await _laboratoryTestingRepository.GetLabTestsAsync(filter, statusBool);
+
+            // Fetch ActionId for "Read" action
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            var auditLog = new AuditLog
+            {
+                UserId = userId,
+                ActionId = actionId,
+                Resource = "Lab Test",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+
+            // Return empty list if no results — not an error
+            return labTests.Select(lt => new LaboratoryTestingResponse
+            {
+                TestId = lt.TestId,
+                PatientId = lt.PatientId,
+                Type = lt.Type,
+                Date = lt.Date,
+                TechnicianId = lt.TechnicianId,
+                Status = lt.Status
+            });
+        }
+        catch (HealthNetException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while fetching lab tests. {ex.Message}");
+        }
+    }
 }

@@ -1,4 +1,5 @@
 using HealthNetDb.Entities;
+using HealthNet.DTOs.LabTestDTO;
 
 namespace HealthNet.Repository.LabTestRepo;
 
@@ -8,4 +9,5 @@ public interface ILaboratoryTestingRepository
     Task<LabTest> CreateLabTestAsync(LabTest labTest);
     Task<bool> TechnicianExistsAsync(int technicianId);
     Task<bool> DuplicateTestExistsAsync(int patientId, string type);
+    Task<IEnumerable<LabTest>> GetLabTestsAsync(LaboratoryTestingFilterRequest filter, bool? statusBool);
 }

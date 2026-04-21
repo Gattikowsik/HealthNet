@@ -10,6 +10,13 @@ public enum LabTestType
 }
 public static class LabTestHelper
 {
+    // Valid status values
+    public static readonly string[] ValidStatuses = { "Pending", "Completed" };
+    // Error messages
+    public static string InvalidTypeMessage => $"Invalid test type. Must be one of: {string.Join(", ", GetValidTypes())}.";
+    public static string InvalidStatusMessage => $"Invalid status. Must be one of: {string.Join(", ", ValidStatuses)}.";
+    public static string FutureDateMessage => "Date filter cannot be a future date.";
+
     // Validates if the provided type is one of the allowed lab test types
     public static bool IsValidType(string type)
     {
@@ -29,12 +36,6 @@ public static class LabTestHelper
                    .ToArray();
     }
 
-    // Returns current UTC datetime
-    public static DateTime GetUTCDateTime()
-    {
-        return DateTime.UtcNow;
-    }
-
     // Normalizes type to consistent format
     public static string NormalizeType(string type)
     {
@@ -45,5 +46,23 @@ public static class LabTestHelper
             "XRay" => "X-Ray",
             _ => type
         };
+    }
+
+    // Checks if the given status is valid
+    public static bool IsValidStatus(string status)
+    {
+        return status == "Pending" || status == "Completed";
+    }
+
+    // Checks if the given date is in the future
+    public static bool IsFutureDate(DateOnly date)
+    {
+        return date > DateOnly.FromDateTime(DateTime.UtcNow);
+    }
+    
+    // Returns current UTC datetime
+    public static DateTime GetUTCDateTime()
+    {
+        return DateTime.UtcNow;
     }
 }

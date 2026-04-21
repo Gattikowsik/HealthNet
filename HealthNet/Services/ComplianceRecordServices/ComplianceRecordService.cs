@@ -88,4 +88,41 @@ public class ComplianceRecordService : IComplianceRecordService
             throw new Exception(ComplianceHelper.GenericError);
         }
     }
+
+    // <summary>
+    // Returns a filtered list of compliance records
+    // </summary>
+    // <param name="filter"> Filter DTO containing optional filters </param>
+    // <returns> List of ComplianceRecordListDto matching the filters </returns>
+    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter)
+    {
+        // ── STEP 1: Check if all filters are empty ─────────────────
+        // At least one filter must be provided
+        if (!filter.EntityId.HasValue
+            && string.IsNullOrWhiteSpace(filter.Type)
+            && string.IsNullOrWhiteSpace(filter.Result)
+            && !filter.Date.HasValue)
+            throw new ArgumentException(ComplianceHelper.NoFiltersProvided);
+
+        // ── STEP 2: Validate Type if provided ──────────────────────
+        var allowedTypes = new[] { "case", "test", "outbreak" };
+        if (!string.IsNullOrWhiteSpace(filter.Type)
+            && !allowedTypes.Contains(filter.Type.ToLower()))
+            throw new ArgumentException(ComplianceHelper.InvalidType);
+
+        // ── STEP 3: Validate Result if provided ────────────────────
+        var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
+        if (!string.IsNullOrWhiteSpace(filter.Result)
+            && !allowedResults.Contains(filter.Result.ToLower()))
+            throw new ArgumentException(ComplianceHelper.InvalidResult);
+
+        // ── STEP 4: Fetch from repository ──────────────────────────
+        var records = await _repository.GetComplianceRecordsAsync(filter);
+
+        // ── STEP 5: Check if any records were found ─────────────────
+        if (!records.Any())
+            throw new KeyNotFoundException(ComplianceHelper.NoRecordsFound);
+
+        return records;
+    }
 }

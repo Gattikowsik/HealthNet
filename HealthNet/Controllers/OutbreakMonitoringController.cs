@@ -3,6 +3,7 @@ using System.Security.Claims;
 using HealthNet.DTOs.OutbreakMonitoringDTO;
 using HealthNet.Repository.OutbreakMonitoringRepository;
 using HealthNet.Services.OutbreakMonitoringServices;
+using HealthNet.Utility;
 using HealthNetDb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +13,7 @@ namespace HealthNet.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Doctor,Public Health Officer")]
+    [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
     public class OutbreakMonitoringController : ControllerBase
     {
         private readonly IOutbreakMonitoringServices _outbreakMonitoringServices;
@@ -26,7 +27,7 @@ namespace HealthNet.Controllers
         // </summary>
         // <param name="request"> CreateOutbreakRequestDto DTO for data transfer from client </param>
         [HttpPost]
-        [ProducesResponseType((int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> CreateOutbreakAsync([FromBody] CreateOutbreakRequestDto request)
@@ -38,12 +39,7 @@ namespace HealthNet.Controllers
             {
                 return BadRequest(response?.Message);
             }
-            return Created($"/api/v1/[controller]/{response.OutbreakId}", new
-            {
-                message = response.Message,
-                OutbreakId = response.OutbreakId
-            }
-            );
+            return Ok(response);
         }
     }
 }

@@ -121,7 +121,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                 return new CreateOutbreakResponseDto
                 {
                     Success = false,
-                    Message = $"{request.Disease} in {request.Location} is already in Active State."
+                    Message = $"{request.Disease} in {request.Location} is already Exists in Database we cannot update here."
                 };
             }
 

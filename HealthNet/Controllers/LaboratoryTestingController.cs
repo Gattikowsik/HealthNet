@@ -70,5 +70,41 @@ namespace HealthNet.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// GetLabTestsAsync — retrieves lab tests based on optional filters (Type, Status, Date).
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <returns>This will return a list of lab tests based on the provided filters.</returns>
+        [HttpGet("lab-tests")]
+        [Authorize]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetLabTestsAsync([FromQuery] LaboratoryTestingFilterRequest filter)
+        {
+            try
+            {
+                // Extract userId from JWT
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+                var result = await _laboratoryTestingService.GetLabTestsAsync(filter, userId);
+                return Ok(new
+                {
+                    success = true,
+                    count = result.Count(),
+                    data = result
+                });
+            }
+            catch (HealthNetException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
     }
 }

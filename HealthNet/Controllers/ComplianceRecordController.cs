@@ -70,7 +70,9 @@ namespace HealthNet.Controllers
         {
             try
             {
-                var result = await _complianceRecordService.GetAllComplianceRecordsAsync(filter);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+                var result = await _complianceRecordService.GetAllComplianceRecordsAsync(filter, userId);
                 return Ok(result);
             }
             catch (ArgumentException ex)

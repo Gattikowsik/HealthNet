@@ -94,7 +94,7 @@ public class ComplianceRecordService : IComplianceRecordService
     // </summary>
     // <param name="filter"> Filter DTO containing optional filters </param>
     // <returns> List of ComplianceRecordListDto matching the filters </returns>
-    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter)
+    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter,int userId)
     {
         // ── STEP 1: Validate Type if provided ──────────────────────
         var allowedTypes = new[] { "case", "test", "outbreak" };
@@ -115,6 +115,32 @@ public class ComplianceRecordService : IComplianceRecordService
         if (!records.Any())
             throw new KeyNotFoundException(ComplianceHelper.NoRecordsFound);
 
+        try
+        {
+            // ── STEP 5: Get ActionId for "Read" from Action table ───
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // ── STEP 6: Log to AuditLog ────────────────────────────
+            var auditLog = new HealthNetDb.Entities.AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,       
+                Resource  = "ComplianceRecord",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception(ComplianceHelper.GenericError);
+        }
+
+        // ── STEP 7: Return the records ─────────────────────────────
         return records;
     }
 }

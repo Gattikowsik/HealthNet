@@ -5,7 +5,7 @@ namespace HealthNet.DTOs.PatientDto;
 
 public class RegisterPatientRequestDto
 {
-    
+
     [Required]
     public string Name { get; set; } = null!;
 

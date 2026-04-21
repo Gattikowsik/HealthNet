@@ -4,5 +4,5 @@ namespace HealthNet.DTOs.PatientDto;
 
 public class RegisterPatientResponseDto
 {
-    public int PatientId{get;set;}
+    public int PatientId { get; set; }
 }

@@ -10,5 +10,4 @@ public interface IPatientManagementService
 {
      Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto);
      Task<RegisterPatientResponseDto> RegisterPatientAsync(RegisterPatientRequestDto dto);
-
 }

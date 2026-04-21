@@ -8,5 +8,4 @@ public interface IPatientManagementRepository
 {
     Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto);
     Task<Patient> AddAsync(Patient patient);
-
 }

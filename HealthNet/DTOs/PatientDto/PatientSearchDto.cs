@@ -1,6 +1,6 @@
 using System;
 using HealthNetDb.Enums;
-namespace HealthNet.DTOs.PateintDto;
+namespace HealthNet.DTOs.PatientDto;
 
 public class PatientSearchDto
 {

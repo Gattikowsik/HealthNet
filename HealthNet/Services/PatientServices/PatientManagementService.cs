@@ -1,5 +1,5 @@
 using System;
-using HealthNet.DTOs.PateintDto;
+using HealthNet.DTOs.PatientDto;
 using HealthNet.DTOs.Pages;
 using HealthNetDb.Entities;
 using HealthNetDb.Data;
@@ -23,5 +23,25 @@ public class PatientManagementService : IPatientManagementService
     public async Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto)
     {
         return await _patientRepository.SearchPatientsAsync(searchDto);
+    }
+    
+  public async Task<RegisterPatientResponseDto> RegisterPatientAsync(RegisterPatientRequestDto dto)
+    {
+        var patient = new Patient
+        {
+            Name = dto.Name,
+            DOB = dto.DOB,
+            Gender = dto.Gender,
+            Address = dto.Address,
+            ContactInfo = dto.ContactInfo,
+            Status = dto.Status
+        };
+
+        var saved = await _patientRepository.AddAsync(patient);
+
+        return new RegisterPatientResponseDto
+        {
+            PatientId = saved.PatientId
+        };
     }
 }

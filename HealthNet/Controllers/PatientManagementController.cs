@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using HealthNet.Services.PatientServices;
-using HealthNet.DTOs.PateintDto;
+using HealthNet.DTOs.PatientDto;
 using Microsoft.AspNetCore.Authorization;
 using HealthNetDb.Entities;
 using System.Security.Claims;
@@ -28,6 +28,22 @@ namespace HealthNet.Controllers
 
         var result = await _patientService.SearchPatientsAsync(searchDto);
         return Ok(result);
+    }
+    
+   [HttpPost]
+    public async Task<IActionResult> RegisterPatient(
+        [FromBody] RegisterPatientRequestDto dto)
+    {
+        // ✅ Required fields missing → 400
+      //  if (!ModelState.IsValid)
+        //    return BadRequest(ModelState);
+
+        var response = await _patientService.RegisterPatientAsync(dto);
+
+        // ✅ Return 201 with PatientId
+        return Created(
+            $"/api/patients/{response.PatientId}",
+            response);
     }
     }
 }

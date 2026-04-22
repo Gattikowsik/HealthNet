@@ -1,5 +1,5 @@
 using System;
-using HealthNet.DTOs.PateintDto;
+using HealthNet.DTOs.PatientDto;
 using HealthNet.DTOs.Pages;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
@@ -50,5 +50,11 @@ public class PatientManagementRepository : IPatientManagementRepository
             Items= patients
         };
     }
-
+    
+public async Task<Patient> AddAsync(Patient patient)
+    {
+        _context.Patients.Add(patient);
+        await _context.SaveChangesAsync();
+        return patient;
+    }
 }

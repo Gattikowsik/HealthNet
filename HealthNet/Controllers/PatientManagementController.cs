@@ -1,33 +1,56 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using HealthNet.Services.PatientServices;
-using HealthNet.DTOs.PateintDto;
+using HealthNet.DTOs.PatientDto;
 using Microsoft.AspNetCore.Authorization;
 using HealthNetDb.Entities;
 using System.Security.Claims;
+using HealthNet.Utility;
 
 namespace HealthNet.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
+    [Authorize]
     public class PatientManagementController : ControllerBase
     {
-         private readonly IPatientManagementService _patientService;
+        private readonly IPatientManagementService _patientService;
 
-    public PatientManagementController(IPatientManagementService patientService)
-    {
-        _patientService = patientService;
-    }
+        public PatientManagementController(IPatientManagementService patientService)
+        {
+            _patientService = patientService;
+        }
 
-    // ✅ GET /api/patients?name=John&status=true&pageNumber=1&pageSize=10
-    [HttpGet]
-    [Authorize]
-   // [Authorize(Roles="Doctor")]
-    public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchDto searchDto)
-    {
+        [HttpGet]
+        public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchDto searchDto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int userId = int.Parse(userIdClaim!);
 
-        var result = await _patientService.SearchPatientsAsync(searchDto);
-        return Ok(result);
-    }
+            var result = await _patientService.SearchPatientsAsync(searchDto, userId);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
+        [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientRequestDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+            }
+            int userId = int.Parse(userIdClaim!);
+
+            var response = await _patientService.RegisterPatientAsync(dto, userId);
+            if (response.Success == false)
+            {
+                return BadRequest(response.Message);
+            }
+            return Created(string.Empty, new { patientId = response.PatientId });
+        }
     }
 }

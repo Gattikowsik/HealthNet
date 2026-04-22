@@ -8,6 +8,6 @@ namespace HealthNet.Services.PatientServices;
 
 public interface IPatientManagementService
 {
-     Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto);
-     Task<RegisterPatientResponseDto> RegisterPatientAsync(RegisterPatientRequestDto dto);
+     Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto, int userId);
+     Task<RegisterPatientResponseDto> RegisterPatientAsync(RegisterPatientRequestDto dto, int userId);
 }

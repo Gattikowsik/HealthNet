@@ -10,6 +10,7 @@ namespace HealthNet.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
+    [Authorize]
     public class PatientManagementController : ControllerBase
     {
         private readonly IPatientManagementService _patientService;
@@ -19,30 +20,36 @@ namespace HealthNet.Controllers
             _patientService = patientService;
         }
 
-        // ✅ GET /api/patients?name=John&status=true&pageNumber=1&pageSize=10
         [HttpGet]
-        [Authorize]
-        // [Authorize(Roles="Doctor")]
         public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchDto searchDto)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int userId = int.Parse(userIdClaim!);
 
-            var result = await _patientService.SearchPatientsAsync(searchDto);
+            var result = await _patientService.SearchPatientsAsync(searchDto, userId);
             return Ok(result);
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Doctor,Public Health Officer")]
+        [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientRequestDto dto)
         {
-            //✅ Required fields missing → 400
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+            }
+            int userId = int.Parse(userIdClaim!);
 
-            var response = await _patientService.RegisterPatientAsync(dto);
-
-            // ✅ Return 201 with PatientId
-            return Created(
-                $"/api/patients/{response.PatientId}",
-                response);
+            var response = await _patientService.RegisterPatientAsync(dto, userId);
+            if (response.Success == false)
+            {
+                return BadRequest(response.Message);
+            }
+            return Created(string.Empty, new { patientId = response.PatientId });
         }
     }
 }

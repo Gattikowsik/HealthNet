@@ -47,10 +47,10 @@ public class PatientManagementRepository : IPatientManagementRepository
             TotalRecords = totalRecords,
             PageNumber = searchDto.PageNumber,
             PageSize = searchDto.PageSize,
-            Items = patients
+            Items = patients,
         };
     }
-
+    
     public async Task<Patient> AddAsync(Patient patient)
     {
         _context.Patients.Add(patient);

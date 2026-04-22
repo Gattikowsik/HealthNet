@@ -50,7 +50,7 @@ public class LabReportService : ILabReportService
             // Validate only assigned technician can upload
             if (labTest.TechnicianId != userId)
             {
-                throw new HealthNetException(LabReportHelper.UnauthorizedTechnicianMessage);
+                throw new UnauthorizedAccessException(LabReportHelper.UnauthorizedTechnicianMessage);
             }
 
             // Validate duplicate report

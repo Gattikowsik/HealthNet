@@ -50,8 +50,12 @@ namespace HealthNet.Controllers
                 {
                     success = true,
                     message = "Lab report uploaded successfully.",
-                    data    = result
+                    data = result
                 });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { success = false, message = ex.Message });
             }
             catch (HealthNetException ex)
             {

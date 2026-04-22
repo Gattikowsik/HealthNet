@@ -10,11 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HealthNet.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class LabReportController : ControllerBase
     {
-            private readonly ILabReportService _labReportService;
+        private readonly ILabReportService _labReportService;
 
         // <summary>
         // Constructor for initializing fields

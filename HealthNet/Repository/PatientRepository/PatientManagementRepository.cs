@@ -50,7 +50,7 @@ public class PatientManagementRepository : IPatientManagementRepository
             Items = patients,
         };
     }
-    
+
     public async Task<Patient> AddAsync(Patient patient)
     {
         _context.Patients.Add(patient);

@@ -24,14 +24,20 @@ public class LabReportService : ILabReportService
     }
 
     // Uploads a lab report for a completed lab test.
-    public async Task<LabReportResponse> UploadLabReportAsync(LabReportRequest request, int userId)
+    public async Task<LabReportResponse> UploadLabReportAsync(LabReportRequest request, int userId, string webRootPath)
     {
         try
         {
             // Validate FileURI is a valid URL
-            if (!LabReportHelper.IsValidFileUri(request.FileURI))
+            if (!LabReportHelper.IsValidFile(request.File))
             {
-                throw new HealthNetException(LabReportHelper.InvalidUrlMessage);
+                throw new HealthNetException(LabReportHelper.InvalidFileMessage);
+            }
+
+            // Validate file size (max 10 MB)
+            if (request.File.Length > 10 * 1024 * 1024)
+            {
+                throw new HealthNetException(LabReportHelper.FileTooLargeMessage);
             }
 
             // Validate TestId exists
@@ -61,13 +67,16 @@ public class LabReportService : ILabReportService
             }
 
             // Generate SHA256 hash of FileURI
-            string fileHash = LabReportHelper.GenerateFileHash(request.FileURI);
+            string fileHash = await LabReportHelper.GenerateFileHashAsync(request.File);
+
+            // Save file to local storage and get URI
+            string fileUri = await LabReportHelper.SaveFileAsync(request.File, webRootPath, request.TestId);
 
             //  Map request to LabReport entity
             var labReport = new LabReport
             {
                 TestId   = request.TestId,
-                FileURI  = request.FileURI,
+                FileURI  = fileUri,
                 FileHash = fileHash,
                 Date     = DateTime.UtcNow,
                 Status   = false    // Not Verified by default
@@ -107,6 +116,10 @@ public class LabReportService : ILabReportService
                 Date     = created.Date,
                 Status   = created.Status
             };
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw;
         }
         catch (HealthNetException)
         {

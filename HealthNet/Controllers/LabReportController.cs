@@ -15,14 +15,17 @@ namespace HealthNet.Controllers
     public class LabReportController : ControllerBase
     {
         private readonly ILabReportService _labReportService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         // <summary>
         // Constructor for initializing fields
         // </summary>
         // <param name="labReportService"> labReportService object to use the methods in it. </param>
-        public LabReportController(ILabReportService labReportService)
+        // <param name="webHostEnvironment"> webHostEnvironment object to get the wwwroot path for file storage. </param>
+        public LabReportController(ILabReportService labReportService, IWebHostEnvironment webHostEnvironment)
         {
             _labReportService = labReportService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // <summary>
@@ -31,12 +34,13 @@ namespace HealthNet.Controllers
         // <param name="request"> LabReportRequest DTO for data transfer from client </param>
         [HttpPost]
         [Authorize(Roles = Roles.LabTechnician)]
+        [Consumes("multipart/form-data")] // Specify that the endpoint accepts multipart/form-data for file uploads
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.Forbidden)]
         [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> UploadLabReportAsync([FromBody] LabReportRequest request)
+        public async Task<IActionResult> UploadLabReportAsync([FromForm] LabReportRequest request)
         {
             try
             {
@@ -44,7 +48,11 @@ namespace HealthNet.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 int userId = int.Parse(userIdClaim!);
 
-                var result = await _labReportService.UploadLabReportAsync(request, userId);
+                // Get wwwroot path for file storage
+                string webRootPath = _webHostEnvironment.WebRootPath
+                                     ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+                var result = await _labReportService.UploadLabReportAsync(request, userId, webRootPath);
 
                 return Ok(new
                 {

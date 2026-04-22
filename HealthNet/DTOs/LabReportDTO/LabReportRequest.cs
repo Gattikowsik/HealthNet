@@ -10,5 +10,5 @@ public class LabReportRequest
     public int TestId { get; set; }         // Must exist in LabTest table
 
     [Required]
-    public string FileURI { get; set; } = null!;    // Must be valid URL
+    public IFormFile File { get; set; } = null!; 
 }

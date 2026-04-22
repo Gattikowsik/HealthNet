@@ -5,6 +5,7 @@ using HealthNet.DTOs.PatientDto;
 using Microsoft.AspNetCore.Authorization;
 using HealthNetDb.Entities;
 using System.Security.Claims;
+using HealthNet.Utility;
 
 namespace HealthNet.Controllers
 {
@@ -31,7 +32,7 @@ namespace HealthNet.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Doctor,Public Health Officer")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

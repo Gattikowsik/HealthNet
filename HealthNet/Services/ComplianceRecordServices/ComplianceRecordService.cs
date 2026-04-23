@@ -94,35 +94,53 @@ public class ComplianceRecordService : IComplianceRecordService
     // </summary>
     // <param name="filter"> Filter DTO containing optional filters </param>
     // <returns> List of ComplianceRecordListDto matching the filters </returns>
-    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter)
+    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter,int userId)
     {
-        // ── STEP 1: Check if all filters are empty ─────────────────
-        // At least one filter must be provided
-        if (!filter.EntityId.HasValue
-            && string.IsNullOrWhiteSpace(filter.Type)
-            && string.IsNullOrWhiteSpace(filter.Result)
-            && !filter.Date.HasValue)
-            throw new ArgumentException(ComplianceHelper.NoFiltersProvided);
-
-        // ── STEP 2: Validate Type if provided ──────────────────────
+        // ── STEP 1: Validate Type if provided ──────────────────────
         var allowedTypes = new[] { "case", "test", "outbreak" };
         if (!string.IsNullOrWhiteSpace(filter.Type)
             && !allowedTypes.Contains(filter.Type.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidType);
 
-        // ── STEP 3: Validate Result if provided ────────────────────
+        // ── STEP 2: Validate Result if provided ────────────────────
         var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
         if (!string.IsNullOrWhiteSpace(filter.Result)
             && !allowedResults.Contains(filter.Result.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidResult);
 
-        // ── STEP 4: Fetch from repository ──────────────────────────
+        // ── STEP 3: Fetch from repository ──────────────────────────
         var records = await _repository.GetComplianceRecordsAsync(filter);
 
-        // ── STEP 5: Check if any records were found ─────────────────
+        // ── STEP 4: Check if any records were found ─────────────────
         if (!records.Any())
             throw new KeyNotFoundException(ComplianceHelper.NoRecordsFound);
 
+        try
+        {
+            // ── STEP 5: Get ActionId for "Read" from Action table ───
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // ── STEP 6: Log to AuditLog ────────────────────────────
+            var auditLog = new HealthNetDb.Entities.AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,       
+                Resource  = "ComplianceRecord",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception(ComplianceHelper.GenericError);
+        }
+
+        // ── STEP 7: Return the records ─────────────────────────────
         return records;
     }
 }

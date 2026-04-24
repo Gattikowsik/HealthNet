@@ -69,8 +69,26 @@ public class LabReportService : ILabReportService
             // Generate SHA256 hash of FileURI
             string fileHash = await LabReportHelper.GenerateFileHashAsync(request.File);
 
-            // Save file to local storage and get URI
-            string fileUri = await LabReportHelper.SaveFileAsync(request.File, webRootPath, request.TestId);
+            //Logic to save file to local storage and get URI
+            // Create reports folder if it doesn't exist
+            var reportsFolder = Path.Combine(webRootPath, "reports");
+            if (!Directory.Exists(reportsFolder))
+            {
+                Directory.CreateDirectory(reportsFolder);
+            }
+
+            // Generate unique filename — testId + timestamp + original extension
+            var extension = Path.GetExtension(request.File.FileName).ToLower();
+            var fileName  = $"labtest_{request.TestId}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
+            var filePath  = Path.Combine(reportsFolder, fileName);
+
+            // Save file to disk
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await request.File.CopyToAsync(stream);
+            }
+            // Return relative URI
+            string fileUri = $"/reports/{fileName}";
 
             //  Map request to LabReport entity
             var labReport = new LabReport

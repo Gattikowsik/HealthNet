@@ -23,29 +23,6 @@ public static class LabReportHelper
         return Convert.ToHexString(bytes).ToLower();    // 64 char hex string
     }
 
-    // Saves file to local storage and returns the relative path
-    public static async Task<string> SaveFileAsync(IFormFile file, string webRootPath, int testId)
-    {
-        // Create reports folder if it doesn't exist
-        var reportsFolder = Path.Combine(webRootPath, "reports");
-        if (!Directory.Exists(reportsFolder))
-        {
-            Directory.CreateDirectory(reportsFolder);
-        }
-
-        // Generate unique filename — testId + timestamp + original extension
-        var extension = Path.GetExtension(file.FileName).ToLower();
-        var fileName  = $"labtest_{testId}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
-        var filePath  = Path.Combine(reportsFolder, fileName);
-
-        // Save file to disk
-        using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
-
-        // Return relative URI
-        return $"/reports/{fileName}";
-    }
-
     // Error messages
     public static string InvalidFileMessage => $"File must be one of: {string.Join(", ", ValidExtensions)}.";
     public static string FileTooLargeMessage => "File size must not exceed 10MB.";

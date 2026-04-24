@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HealthNetDb.Enums;
 
 namespace HealthNetDb.Entities;
 
@@ -29,7 +30,7 @@ public class MedicalRecord
     public DateOnly Date { get; set; }
 
     [Required]
-    public bool Status { get; set; }    //Discharged or not 
+    public PatientStatus Status { get; set; }    //Discharged or not 
 
     public virtual Patient PatientNavigation { get; set; } = null!;
 }

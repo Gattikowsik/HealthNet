@@ -17,6 +17,10 @@ public class LabReport
     [Required]
     public string FileURI { get; set; } = null!;    //Report file URL
 
+    [Column(TypeName = "VARCHAR(64)")]   // SHA256 = 64 chars
+    [Required]
+    public string FileHash { get; set; } = null!; // Hash of the report file 
+
     [Required]
     public DateTime Date { get; set; } //Date & Time of the test
 

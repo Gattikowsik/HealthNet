@@ -12,7 +12,7 @@ namespace HealthNet.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Compliance Officer")]
+    [Authorize(Roles = $"{Roles.ComplianceOfficer}, {Roles.Admin}")]
     public class ComplianceRecordController : ControllerBase
     {
         private readonly IComplianceRecordService _complianceRecordService;
@@ -70,7 +70,9 @@ namespace HealthNet.Controllers
         {
             try
             {
-                var result = await _complianceRecordService.GetAllComplianceRecordsAsync(filter);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+                var result = await _complianceRecordService.GetAllComplianceRecordsAsync(filter, userId);
                 return Ok(result);
             }
             catch (ArgumentException ex)

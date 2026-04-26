@@ -6,5 +6,5 @@ namespace HealthNet.Services.ComplianceRecordServices;
 public interface IComplianceRecordService
 {
     Task<ComplianceRecordResponseDto> AddComplianceRecordAsync(CreateComplianceRecordDto request, int userId);
-    Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter); 
+    Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter,int userId); 
 }

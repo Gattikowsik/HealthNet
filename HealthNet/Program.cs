@@ -18,6 +18,8 @@ using HealthNet.Services.OutbreakMonitoringServices;
 using HealthNet.Repository.OutbreakMonitoringRepository;
 using HealthNetDb.Entities;
 using HealthNet.Utility;
+using HealthNet.Repository.LabReportRepo;
+using HealthNet.Services.LabReportServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +40,8 @@ builder.Services.AddScoped<IPatientManagementRepository,PatientManagementReposit
 builder.Services.AddScoped<IPatientManagementService,PatientManagementService>();
 builder.Services.AddScoped<IOutbreakMonitoringServices,OutbreakMonitoringServices>();
 builder.Services.AddScoped<IOutBreakMonitoringRepository,OutbreakMonitoringRepository>();
+builder.Services.AddScoped<ILabReportRepository, LabReportRepository>();
+builder.Services.AddScoped<ILabReportService, LabReportService>();
 builder.Services.AddHttpClient<LocationHelper>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
@@ -87,6 +91,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

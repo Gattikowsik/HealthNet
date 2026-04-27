@@ -15,17 +15,15 @@ namespace HealthNet.Controllers
     public class LabReportController : ControllerBase
     {
         private readonly ILabReportService _labReportService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
 
         // <summary>
         // Constructor for initializing fields
         // </summary>
         // <param name="labReportService"> labReportService object to use the methods in it. </param>
         // <param name="webHostEnvironment"> webHostEnvironment object to get the wwwroot path for file storage. </param>
-        public LabReportController(ILabReportService labReportService, IWebHostEnvironment webHostEnvironment)
+        public LabReportController(ILabReportService labReportService)
         {
             _labReportService = labReportService;
-            _webHostEnvironment = webHostEnvironment;
         }
 
         // <summary>
@@ -48,11 +46,8 @@ namespace HealthNet.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 int userId = int.Parse(userIdClaim!);
 
-                // Get wwwroot path for file storage
-                string webRootPath = _webHostEnvironment.WebRootPath
-                                     ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-                var result = await _labReportService.UploadLabReportAsync(request, userId, webRootPath);
+                // Call the service method to upload the lab report
+                var result = await _labReportService.UploadLabReportAsync(request, userId);
 
                 return Ok(new
                 {

@@ -20,6 +20,8 @@ using HealthNetDb.Entities;
 using HealthNet.Utility;
 using HealthNet.Repository.LabReportRepo;
 using HealthNet.Services.LabReportServices;
+using HealthNet.Repository.ReportingAndAnalytics;
+using HealthNet.Services.ReportingAndAnalyticsServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +45,8 @@ builder.Services.AddScoped<IOutBreakMonitoringRepository,OutbreakMonitoringRepos
 builder.Services.AddScoped<ILabReportRepository, LabReportRepository>();
 builder.Services.AddScoped<ILabReportService, LabReportService>();
 builder.Services.AddHttpClient<LocationHelper>();
+builder.Services.AddScoped<IReportingAndAnalyticsRepository,ReportingAndAnalyticsRepository>();
+builder.Services.AddScoped<IReportingAndAnalyticsService,ReportingAndAnalyticsService>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

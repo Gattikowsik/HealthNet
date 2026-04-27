@@ -23,11 +23,11 @@
     <Folder Include="DTOs\LabReportDTO\" />
     <Folder Include="DTOs\OutbreakMonitoringDTO\" />
     <Folder Include="DTOs\PatientDto\" />
+    <Folder Include="DTOs\ReportingAndAnalyticsDTO\" />
     <Folder Include="Repository\CitizenSymptomReportingRepository\LabReportRepo\" />
     <Folder Include="Repository\ComplianceRecord\" />
     <Folder Include="Repository\LabReportRepo\" />
     <Folder Include="Repository\PatientRepository\" />
-    <Folder Include="Services\" />
     <Folder Include="Services\ComplianceRecordServices\" />
     <Folder Include="Services\LabReportServices\" />
     <Folder Include="Services\OutbreakMonitoringServices\" />

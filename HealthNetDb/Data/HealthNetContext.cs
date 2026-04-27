@@ -27,7 +27,7 @@ public class HealthNetContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer("data source=LTIN718388\\SQLEXPRESS; database=HealthNetDataBaseTest; integrated security=true; trust server certificate=true;");
+            optionsBuilder.UseSqlServer("Default Connection");
         }
     }
 

@@ -74,5 +74,53 @@ namespace HealthNet.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
+        // <summary>
+        // GetReportsByTestIdAsync — returns all reports for a specific lab test
+        // </summary>
+        // <param name="id"> TestId from route </param>
+        [HttpGet("{id}")]
+        [Authorize(Roles = $"{Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer},{Roles.Researcher},{Roles.Admin},{Roles.ComplianceOfficer}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetReportsByTestIdAsync(int id)
+        {
+            try
+            {
+                // Validate id - no negative numbers
+                if (id <= 0)
+                {
+                    return BadRequest(new { success = false, message = LabReportHelper.InvalidTestIdMessage });
+                }
+
+                // Extract userId from JWT for AuditLog
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+
+                var result = await _labReportService.GetReportsByTestIdAsync(id, userId);
+
+                if (result == null)
+                {
+                    return NotFound(new { success = false, message = LabReportHelper.NoReportsFoundMessage(id) });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    data    = result
+                });
+            }
+            catch (HealthNetException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
     }
 }

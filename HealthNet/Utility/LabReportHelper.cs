@@ -30,4 +30,6 @@ public static class LabReportHelper
     public static string TestNotPendingMessage => "Lab test is already completed. Cannot upload report.";
     public static string DuplicateReportMessage => "A report already exists for this lab test.";
     public static string UnauthorizedTechnicianMessage => "You are not the assigned technician for this lab test.";
+    public static string InvalidTestIdMessage => "TestId must be greater than 0.";
+    public static string NoReportsFoundMessage(int testId) => $"No reports found for Test ID {testId}.";
 }

@@ -148,4 +148,71 @@ public class LabReportService : ILabReportService
             throw new HealthNetException($"An error occurred while uploading lab report. {ex.Message}");
         }
     }
+
+    // Gets all reports for a specific lab test.
+    public async Task<LabTestWithReportsResponse> GetReportsByTestIdAsync(int testId, int userId)
+    {
+        try
+        {
+            // Validate TestId exists
+            var labTest = await _labReportRepository.GetLabTestByIdAsync(testId);
+            if (labTest == null)
+            {
+                return null!;   // null signals 404 to controller
+            }
+
+            // Get all reports for this test
+            var reports = await _labReportRepository.GetReportsByTestIdAsync(testId);
+
+            // Check if any reports exist
+            if (!reports.Any())
+            {
+                return null!;   // null signals 404 to controller
+            }
+
+            // Fetch ActionId for "Read"
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // Save AuditLog
+            var auditLog = new AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,
+                Resource  = "Lab Report",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+
+            // Map entities to response DTO
+            return new LabTestWithReportsResponse
+            {
+                TestId       = labTest.TestId,
+                PatientId    = labTest.PatientId,
+                Type         = labTest.Type,
+                Date         = labTest.Date,
+                TechnicianId = labTest.TechnicianId,
+                TestStatus   = labTest.Status,
+                Reports      = reports.Select(r => new LabReportSummaryResponse
+                {
+                    ReportId = r.ReportId,
+                    FileURI  = r.FileURI,
+                    Date     = r.Date,
+                    Status   = r.Status
+                })
+            };
+        }
+        catch (HealthNetException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while fetching lab reports. {ex.Message}");
+        }
+    }
 }

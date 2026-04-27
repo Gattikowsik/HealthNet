@@ -24,46 +24,31 @@ namespace HealthNet.Controllers
         }
         [HttpPost]
         [Authorize(Roles = "Citizen,Admin")]
-        public async Task<IActionResult> Submit([FromBody] SubmitSymptomReportRequestDto request)
+        public async Task<IActionResult> Submit(
+    [FromBody] SubmitSymptomReportRequestDto request)
         {
-            // Model validation (Required fields etc.)
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var today = DateTime.UtcNow.Date;
-            if (request.Date.Date != today)
-            {
-                ModelState.AddModelError(nameof(request.Date), "Symptom date must be today's date.");
-                return BadRequest(ModelState);
-            }
-
-            // JSON validation using Utility
-            if (!SymptomReportHelper.IsValidJson(request.SymptomsJson))
-            {
-                ModelState.AddModelError(nameof(request.SymptomsJson),
-                    "SymptomsJson must be a valid JSON string");
-                return BadRequest(ModelState);              // 400 with details
-            }
-
-            //Get citizenId from JWT
-            var citizenId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-            //Call service
             try
             {
+                var citizenId = int.Parse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
                 var response = await _service.SubmitAsync(request, citizenId);
-                return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+
+                return Created(
+                    $"/api/v1/CitizenSymptomReporting/{response.ReportId}",
+                    response);
             }
-            catch (InvalidOperationException ex)
+            catch (HealthNetException ex) // MUST be this exact type
             {
-                return BadRequest(new
+                var problem = new ProblemDetails
                 {
-                    errors = new
-                    {
-                        SymptomReport = new[] { ex.Message }
-                    }
-                });
+                    Title = "Invalid request payload",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest,
+                    Type = "https://datatracker.ietf.org/doc/html/rfc7807"
+                };
+
+                return BadRequest(problem);
             }
         }
 

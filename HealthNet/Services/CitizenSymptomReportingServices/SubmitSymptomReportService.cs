@@ -4,6 +4,7 @@ using HealthNet.DTOs.CitizenSymptomReportingDTO;
 using HealthNet.DTOs.Pages;
 using HealthNet.Repository;
 using HealthNet.Services.PaginationService;
+using HealthNet.Utility;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -120,6 +121,11 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
     }
     public async Task<SubmitSymptomReportResponseDto> SubmitAsync(SubmitSymptomReportRequestDto request, int citizenId)
     {
+
+        // Centralized validation
+        SymptomReportValidator.ValidateSymptomsJson(request.SymptomsJson);
+        SymptomReportValidator.ValidateDate(request.Date);
+
         // Duplicate check (block until CLOSED)
         var existingActiveReport = await _context.SymptomReports
             .Where(r =>

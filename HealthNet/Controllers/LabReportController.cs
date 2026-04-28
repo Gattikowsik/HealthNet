@@ -74,7 +74,7 @@ namespace HealthNet.Controllers
         // GetReportsByTestIdAsync — returns all reports for a specific lab test
         // </summary>
         // <param name="id"> TestId from route </param>
-        [HttpGet("{id}")]
+        [HttpGet("test/{id}")]
         [Authorize(Roles = $"{Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer},{Roles.Researcher},{Roles.Admin},{Roles.ComplianceOfficer}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -111,6 +111,47 @@ namespace HealthNet.Controllers
             catch (HealthNetException ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+            // <summary>
+        // DownloadReportAsync — downloads lab report file by TestId
+        // </summary>
+        // <param name="testId"> TestId from route </param>
+        [HttpGet("test/{testId}/download")]
+        [Authorize(Roles = $"{Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer},{Roles.Researcher},{Roles.Admin},{Roles.ComplianceOfficer}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> DownloadReportAsync(int testId)
+        {
+            try
+            {
+                // Validate testId
+                if (testId <= 0)
+                {
+                    return BadRequest(new { success = false, message = LabReportHelper.InvalidTestIdMessage });
+                }
+
+                // Extract userId
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+                
+                var (fileData, fileName, contentType) = await _labReportService.DownloadReportAsync(testId, userId);
+                
+                // Return file as a downloadable response
+                return File(fileData, contentType, fileName);
+            }
+            catch (HealthNetException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
             {

@@ -32,4 +32,5 @@ public static class LabReportHelper
     public static string UnauthorizedTechnicianMessage => "You are not the assigned technician for this lab test.";
     public static string InvalidTestIdMessage => "TestId must be greater than 0.";
     public static string NoReportsFoundMessage(int testId) => $"No reports found for Test ID {testId}.";
+    public static string ReportNotFoundMessage => "Lab report not found.";
 }

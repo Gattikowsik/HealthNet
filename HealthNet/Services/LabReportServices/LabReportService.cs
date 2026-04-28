@@ -24,7 +24,7 @@ public class LabReportService : ILabReportService
     }
 
     // Uploads a lab report for a completed lab test.
-    public async Task<LabReportResponse> UploadLabReportAsync(LabReportRequest request, int userId, string webRootPath)
+    public async Task<LabReportResponse> UploadLabReportAsync(LabReportRequest request, int userId)
     {
         try
         {
@@ -66,36 +66,24 @@ public class LabReportService : ILabReportService
                 throw new HealthNetException(LabReportHelper.DuplicateReportMessage);
             }
 
-            // Generate SHA256 hash of FileURI
-            string fileHash = await LabReportHelper.GenerateFileHashAsync(request.File);
-
-            //Logic to save file to local storage and get URI
-            // Create reports folder if it doesn't exist
-            var reportsFolder = Path.Combine(webRootPath, "reports");
-            if (!Directory.Exists(reportsFolder))
-            {
-                Directory.CreateDirectory(reportsFolder);
-            }
-
-            // Generate unique filename — testId + timestamp + original extension
+            // Generate file path and name
             var extension = Path.GetExtension(request.File.FileName).ToLower();
-            var fileName  = $"labtest_{request.TestId}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
-            var filePath  = Path.Combine(reportsFolder, fileName);
+            var fileName  = $"labtest_{request.TestId}_{DateTime.UtcNow:yyMMdd}{extension}";
 
-            // Save file to disk
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            // Read file into byte array using MemoryStream
+            byte[] fileData;
+            using (var memoryStream = new MemoryStream())
             {
-                await request.File.CopyToAsync(stream);
+                await request.File.CopyToAsync(memoryStream);
+                fileData = memoryStream.ToArray();
             }
-            // Return relative URI
-            string fileUri = $"/reports/{fileName}";
 
             //  Map request to LabReport entity
             var labReport = new LabReport
             {
                 TestId   = request.TestId,
-                FileURI  = fileUri,
-                FileHash = fileHash,
+                FileURI  = fileName,
+                FileData = fileData, // Store actual file data in the database
                 Date     = DateTime.UtcNow,
                 Status   = false    // Not Verified by default
             };
@@ -130,7 +118,6 @@ public class LabReportService : ILabReportService
                 ReportId = created.ReportId,
                 TestId   = created.TestId,
                 FileURI  = created.FileURI,
-                FileHash = created.FileHash,
                 Date     = created.Date,
                 Status   = created.Status
             };

@@ -18,4 +18,6 @@ public interface IOutBreakMonitoringRepository
     Task<int> AddAuditLogAsync(int userId, string actionName, string resource);
     Task<Outbreak?> GetOutbreakByIdAsync(int outbreakId);
     Task<UpdateOutbreakResult> UpdateOutbreakAsync(int outbreakId, UpdateOutbreakRequestDto request);
+    Task<bool> OutbreakExistsAsync(int outbreakId);
+    Task<int> AddEpidemiologyAsync(Epidemiology epidemiology);
 }

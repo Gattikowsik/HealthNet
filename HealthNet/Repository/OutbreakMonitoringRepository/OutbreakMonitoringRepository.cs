@@ -150,4 +150,17 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
             throw new HealthNetException("Error while updating outbreak: " + ex.Message);
         }
     }
+
+    public async Task<bool> OutbreakExistsAsync(int outbreakId)
+    {
+        return await _context.Outbreaks.AnyAsync(o => o.OutbreakId == outbreakId);
+    }
+
+    public async Task<int> AddEpidemiologyAsync(Epidemiology epidemiology)
+    {
+
+        await _context.Epidemiologies.AddAsync(epidemiology);
+        await _context.SaveChangesAsync();
+        return epidemiology.EpiId;
+    }
 }

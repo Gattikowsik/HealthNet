@@ -18,6 +18,8 @@ using HealthNet.Services.OutbreakMonitoringServices;
 using HealthNet.Repository.OutbreakMonitoringRepository;
 using HealthNetDb.Entities;
 using HealthNet.Utility;
+using HealthNet.Repository.MedicalRepository;
+using HealthNet.Services.MedicalServices;
 using HealthNet.Repository.LabReportRepo;
 using HealthNet.Services.LabReportServices;
 using HealthNet.Services.AuditService;
@@ -40,6 +42,13 @@ builder.Services.AddScoped<ILaboratoryTestingService, LaboratoryTestingService>(
 builder.Services.AddScoped<IPaginationService, PaginationService>();
 builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
 builder.Services.AddScoped<IComplianceRepository, ComplianceRepository>();
+builder.Services.AddScoped<IPatientManagementRepository, PatientManagementRepository>();
+builder.Services.AddScoped<IPatientManagementService, PatientManagementService>();
+builder.Services.AddScoped<IMedicalRecordRepository, MedicalRecordRepository>();
+builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
+builder.Services.AddScoped<IOutbreakMonitoringServices, OutbreakMonitoringServices>();
+builder.Services.AddScoped<IOutBreakMonitoringRepository, OutbreakMonitoringRepository>();
+
 builder.Services.AddScoped<IPatientManagementRepository,PatientManagementRepository>();
 builder.Services.AddScoped<IPatientManagementService,PatientManagementService>();
 builder.Services.AddScoped<IOutbreakMonitoringServices,OutbreakMonitoringServices>();

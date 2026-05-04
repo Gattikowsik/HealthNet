@@ -57,5 +57,26 @@ namespace HealthNet.Controllers
 
             return Ok(response);
         }
+
+        // <summary>
+        // GetComplianceRecords — Get Compliance Records for given Query Filters
+        // </summary>
+        // <param name="request"> ComplianceMetricsReportRequest DTO for data transfer from client </param>
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.ComplianceOfficer}")]
+        [HttpGet("compliance")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetComplianceRecords([FromQuery] ComplianceMetricsReportRequest request)
+        {
+            var response = await _reportingAndAnalyticsService.ComplianceMetricsReportService(request);
+
+            if (!response.Success)
+            {
+                return BadRequest(response?.Message);
+            }
+
+            return Ok(response);
+        }
     }
 }

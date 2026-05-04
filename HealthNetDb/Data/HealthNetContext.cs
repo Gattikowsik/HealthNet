@@ -35,7 +35,7 @@ public class HealthNetContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Users>().HasQueryFilter(u => u.Status==true);
+        modelBuilder.Entity<Users>().HasQueryFilter(u => u.Status == true);
         // Configure Cases -> Users (Citizen)
         // apply cascade onDelete to Citizen
         modelBuilder.Entity<Cases>()

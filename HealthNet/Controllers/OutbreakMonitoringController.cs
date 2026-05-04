@@ -34,10 +34,48 @@ namespace HealthNet.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int userId = int.Parse(userIdClaim!);
-            var response = await _outbreakMonitoringServices.AddOutbreakService(userId,request);
+            var response = await _outbreakMonitoringServices.AddOutbreakService(userId, request);
             if (!response.Success || response == null)
             {
                 return BadRequest(response?.Message);
+            }
+            return Ok(response);
+        }
+
+        //getOutbreakbyId
+        [HttpGet("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetOutbreakByIdAsync(int id)
+        {
+            var response = await _outbreakMonitoringServices.GetOutbreakByIdService(id);
+
+            if (response == null)
+                return NotFound("Outbreak not found");
+
+            return Ok(response);
+        }
+
+        //Updating the outbreak
+        [HttpPatch("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Conflict)]
+        public async Task<IActionResult> UpdateOutbreakAsync(int id, [FromBody] UpdateOutbreakRequestDto request)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int userId = int.Parse(userIdClaim!);
+            var response = await _outbreakMonitoringServices.UpdateOutbreakService(userId, id, request);
+            if (!response.Success)
+            {
+                if (response.Message.Contains("closed"))
+                    return Conflict(response.Message);
+                if (response.Message.Contains("No changes"))
+                    return Conflict(response.Message);
+                if (response.Message.Contains("not found"))
+                    return NotFound(response.Message);
+                return BadRequest(response.Message);
             }
             return Ok(response);
         }

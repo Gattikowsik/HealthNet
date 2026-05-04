@@ -13,7 +13,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
     {
         _context = context;
     }
-    
+
     /// <summary>
     /// Adds Outbreak to the Database
     /// </summary>
@@ -39,12 +39,12 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
             await _context.SaveChangesAsync();
             return outbreak.OutbreakId;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new HealthNetException("An Error occured while adding the Outbreak "+ex.Message);
+            throw new HealthNetException("An Error occured while adding the Outbreak " + ex.Message);
         }
     }
-    
+
     /// <summary>
     /// Checks Whether the duplicate Outbreak Exists
     /// </summary>
@@ -57,33 +57,97 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
     {
         try
         {
-            return await _context.Outbreaks.AnyAsync(ob => ob.Disease==request.Disease && ob.Location==request.Location && ob.Status);
+            return await _context.Outbreaks.AnyAsync(ob => ob.Disease == request.Disease && ob.Location == request.Location && ob.Status);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new HealthNetException("An Error Occured while Check for Duplicate Outbreak "+ex.Message);
+            throw new HealthNetException("An Error Occured while Check for Duplicate Outbreak " + ex.Message);
         }
     }
 
-    public async Task<int> AddAuditLogAsync(int userId, string resource)
+    public async Task<int> AddAuditLogAsync(int userId, string actionName, string resource)
     {
         try
         {
-            int actionId = await (from a in _context.Actions where a.ActionName=="Create" select a.ActionId).FirstAsync();
-            AuditLog auditLog = new AuditLog()
+            int actionId = await _context.Actions
+                .Where(a => a.ActionName == actionName)
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            AuditLog auditLog = new AuditLog
             {
                 UserId = userId,
                 ActionId = actionId,
                 Resource = resource,
                 Timestamp = DateTime.UtcNow
             };
+
             await _context.AuditLogs.AddAsync(auditLog);
             await _context.SaveChangesAsync();
+
             return auditLog.AuditId;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new HealthNetException("An Error occured while Logging Outbreak to Audit. "+ex.Message);
+            throw new HealthNetException(
+                "An error occurred while logging audit: " + ex.Message);
+        }
+    }
+
+    //GetOutbreakById
+    public async Task<Outbreak?> GetOutbreakByIdAsync(int outbreakId)
+    {
+        try
+        {
+            return await _context.Outbreaks.AsNoTracking().FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException("Error while fetching outbreak: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing outbreak by modifying severity, end date, or status.
+    /// The update is performed only if at least one field value is different
+    /// from the existing data in the database.
+    /// </summary>
+
+    public async Task<UpdateOutbreakResult> UpdateOutbreakAsync(int outbreakId, UpdateOutbreakRequestDto request)
+    {
+        try
+        {
+            var outbreak = await _context.Outbreaks.FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+            if (outbreak == null)
+                return UpdateOutbreakResult.NotFound;
+
+            if (!outbreak.Status)
+                return UpdateOutbreakResult.Closed;
+            bool hasChanges = false;
+            if (!string.Equals(outbreak.Severity, request.Severity, StringComparison.OrdinalIgnoreCase))
+            {
+                outbreak.Severity = request.Severity;
+                hasChanges = true;
+            }
+            if (outbreak.EndDate != request.EndDate)
+            {
+                outbreak.EndDate = request.EndDate;
+                hasChanges = true;
+            }
+            if (outbreak.Status != request.Status)
+            {
+                outbreak.Status = request.Status;
+                hasChanges = true;
+            }
+            if (!hasChanges)
+                return UpdateOutbreakResult.NoChanges;
+
+            await _context.SaveChangesAsync();
+            return UpdateOutbreakResult.Updated;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException("Error while updating outbreak: " + ex.Message);
         }
     }
 }

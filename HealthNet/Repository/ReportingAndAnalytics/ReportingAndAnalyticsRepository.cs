@@ -1,7 +1,9 @@
 using System;
 using HealthNet.DTOs.ReportingAndAnalyticsDTO;
+using HealthNet.Utility;
 using HealthNetDb.Data;
 using HealthNetDb.Entities;
+using HealthNetDb.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthNet.Repository.ReportingAndAnalytics;
@@ -79,6 +81,70 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
         catch(Exception ex)
         {
             throw new HealthNetException("An Error occured while fetching the outbreaks reports "+ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Get Patients Data from the Database
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    ///  The Patients Data from the DB
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<PatientAnalyticsReportResponse> PatientAnalyticsReport(PatientAnalyticsReportRequest request)
+    {
+        try
+        {
+            var query = _context.Patients.AsQueryable();
+
+            // Filter using Age
+            if (request.MinAge.HasValue)
+            {
+                query = query.Where(p => request.MinAge <= (DateTime.UtcNow.Year - p.DOB.Year));
+            }
+            if (request.MaxAge.HasValue)
+            {
+                query = query.Where(p => (DateTime.UtcNow.Year - p.DOB.Year) <= request.MaxAge);
+            }
+
+            // Filter using Gender
+            if (!string.IsNullOrWhiteSpace(request.Gender))
+            {
+                query = query.Where(p => p.Gender.ToLower().Equals(request.Gender.ToLower()));
+            }
+
+            //Filter using Date ranges for DOB
+            if(request.StartDate.HasValue && request.EndDate.HasValue)
+            {
+                query = query.Where(p => request.StartDate<=p.DOB && p.DOB<=request.EndDate);
+            }
+            else if (request.StartDate.HasValue)
+            {
+                query = query.Where(p => request.StartDate <= p.DOB);
+            }
+            else if (request.EndDate.HasValue)
+            {
+                query = query.Where(p => p.DOB <= request.EndDate);
+            }
+            
+            
+            var data = await query.ToListAsync();    
+            
+            return new PatientAnalyticsReportResponse
+            {
+                Success = true,
+                TotalPatients = data.Count,
+                RegisteredPatients = data.Count(x => x.Status == PatientStatus.Registered),
+                UnderTreatmentPatients = data.Count(x => x.Status == PatientStatus.UnderTreatment),
+                RecoveredPatients = data.Count(x => x.Status == PatientStatus.Recovered),
+                DischargedPatients = data.Count(x => x.Status == PatientStatus.Discharged),
+                Data = data
+            };
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException("An Error occured while fetching the Patients records "+ex.Message);
         }
     }
 }

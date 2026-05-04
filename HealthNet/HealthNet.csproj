@@ -25,6 +25,7 @@
     <Folder Include="DTOs\OutbreakMonitoringDTO\" />
     <Folder Include="DTOs\PatientDto\" />
     <Folder Include="Repository\AuditRepository\" />
+    <Folder Include="DTOs\ReportingAndAnalyticsDTO\" />
     <Folder Include="Repository\CitizenSymptomReportingRepository\LabReportRepo\" />
     <Folder Include="Repository\ComplianceRecord\" />
     <Folder Include="Repository\LabReportRepo\" />

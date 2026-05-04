@@ -20,25 +20,6 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         _context = context;
         _paginationService = paginationService;
     }
-
-    //public async Task<bool> DeleteReportAsync(int reportId)
-    //{
-    //    var report = await _context.SymptomReports
-    //        .FirstOrDefaultAsync(r => r.ReportId == reportId);
-
-    //    if (report == null)
-    //        return false;
-
-    //    // ✅ Soft delete by status change
-    //    if (report.Status != SymptomStatus.Closed)
-    //    {
-    //        report.Status = SymptomStatus.Closed;
-    //        await _context.SaveChangesAsync();
-    //    }
-
-    //    return true;
-    //}
-
     public async Task<PagedResponseDto<SymptomReportResponseDto>> GetAllAsync(int userId, int? citizenId, DateTime? reportDate, SymptomStatus? status, int pageNumber, int pageSize)
     {
         // If citizenId filter is provided, validate citizen existence

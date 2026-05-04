@@ -76,4 +76,19 @@ public class LabReportRepository : ILabReportRepository
             throw new HealthNetException($"An error occurred while updating lab test status. {ex.Message}");
         }
     }
+
+    // Fetches all lab reports associated with a specific lab test.
+    public async Task<IEnumerable<LabReport>> GetReportsByTestIdAsync(int testId)
+    {
+        try
+        {
+            return await _context.LabReports
+                .Where(lr => lr.TestId == testId)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while fetching lab reports. {ex.Message}");
+        }
+    }
 }

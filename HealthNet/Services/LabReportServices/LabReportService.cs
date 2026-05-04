@@ -24,7 +24,7 @@ public class LabReportService : ILabReportService
     }
 
     // Uploads a lab report for a completed lab test.
-    public async Task<LabReportResponse> UploadLabReportAsync(LabReportRequest request, int userId, string webRootPath)
+    public async Task<LabReportResponse> UploadLabReportAsync(LabReportRequest request, int userId)
     {
         try
         {
@@ -66,36 +66,24 @@ public class LabReportService : ILabReportService
                 throw new HealthNetException(LabReportHelper.DuplicateReportMessage);
             }
 
-            // Generate SHA256 hash of FileURI
-            string fileHash = await LabReportHelper.GenerateFileHashAsync(request.File);
-
-            //Logic to save file to local storage and get URI
-            // Create reports folder if it doesn't exist
-            var reportsFolder = Path.Combine(webRootPath, "reports");
-            if (!Directory.Exists(reportsFolder))
-            {
-                Directory.CreateDirectory(reportsFolder);
-            }
-
-            // Generate unique filename — testId + timestamp + original extension
+            // Generate file path and name
             var extension = Path.GetExtension(request.File.FileName).ToLower();
-            var fileName  = $"labtest_{request.TestId}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
-            var filePath  = Path.Combine(reportsFolder, fileName);
+            var fileName  = $"labtest_{request.TestId}_{DateTime.UtcNow:yyMMdd}{extension}";
 
-            // Save file to disk
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            // Read file into byte array using MemoryStream
+            byte[] fileData;
+            using (var memoryStream = new MemoryStream())
             {
-                await request.File.CopyToAsync(stream);
+                await request.File.CopyToAsync(memoryStream);
+                fileData = memoryStream.ToArray();
             }
-            // Return relative URI
-            string fileUri = $"/reports/{fileName}";
 
             //  Map request to LabReport entity
             var labReport = new LabReport
             {
                 TestId   = request.TestId,
-                FileURI  = fileUri,
-                FileHash = fileHash,
+                FileURI  = fileName,
+                FileData = fileData, // Store actual file data in the database
                 Date     = DateTime.UtcNow,
                 Status   = false    // Not Verified by default
             };
@@ -130,7 +118,6 @@ public class LabReportService : ILabReportService
                 ReportId = created.ReportId,
                 TestId   = created.TestId,
                 FileURI  = created.FileURI,
-                FileHash = created.FileHash,
                 Date     = created.Date,
                 Status   = created.Status
             };
@@ -146,6 +133,128 @@ public class LabReportService : ILabReportService
         catch (Exception ex)
         {
             throw new HealthNetException($"An error occurred while uploading lab report. {ex.Message}");
+        }
+    }
+
+    // Gets all reports for a specific lab test.
+    public async Task<LabTestWithReportsResponse> GetReportsByTestIdAsync(int testId, int userId)
+    {
+        try
+        {
+            // Validate TestId exists
+            var labTest = await _labReportRepository.GetLabTestByIdAsync(testId);
+            if (labTest == null)
+            {
+                return null!;   // null signals 404 to controller
+            }
+
+            // Get all reports for this test
+            var reports = await _labReportRepository.GetReportsByTestIdAsync(testId);
+
+            // Check if any reports exist
+            if (!reports.Any())
+            {
+                return null!;   // null signals 404 to controller
+            }
+
+            // Fetch ActionId for "Read"
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // Save AuditLog
+            var auditLog = new AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,
+                Resource  = "Lab Report",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+
+            // Map entities to response DTO
+            return new LabTestWithReportsResponse
+            {
+                TestId       = labTest.TestId,
+                PatientId    = labTest.PatientId,
+                Type         = labTest.Type,
+                Date         = labTest.Date,
+                TechnicianId = labTest.TechnicianId,
+                TestStatus   = labTest.Status,
+                Reports      = reports.Select(r => new LabReportSummaryResponse
+                {
+                    ReportId = r.ReportId,
+                    FileURI  = r.FileURI,
+                    Date     = r.Date,
+                    Status   = r.Status
+                })
+            };
+        }
+        catch (HealthNetException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while fetching lab reports. {ex.Message}");
+        }
+    }
+
+    // Downloads a lab report file by TestId.
+    public async Task<(byte[] FileData, string FileName, string ContentType)> DownloadReportAsync(int testId, int userId)
+    {
+        try
+        {
+            // Reuse existing method — get report by TestId
+            var reports = await _labReportRepository.GetReportsByTestIdAsync(testId);
+            var report  = reports.FirstOrDefault();
+
+            if (report == null)
+            {
+                throw new HealthNetException(LabReportHelper.ReportNotFoundMessage);
+            }
+
+            // Determine content type from file extension
+            var extension   = Path.GetExtension(report.FileURI).ToLower();
+            var contentType = extension switch
+            {
+                ".pdf"  => "application/pdf",
+                ".jpg"  => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".png"  => "image/png",
+                _       => "application/octet-stream"
+            };
+
+            // Fetch ActionId for "Read"
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // Save AuditLog
+            var auditLog = new AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,
+                Resource  = "Lab Report Downloaded",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+
+            return (report.FileData, report.FileURI, contentType);
+        }
+        catch (HealthNetException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while downloading lab report. {ex.Message}");
         }
     }
 }

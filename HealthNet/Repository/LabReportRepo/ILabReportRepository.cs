@@ -9,4 +9,5 @@ public interface ILabReportRepository
     Task<bool> ReportExistsAsync(int testId);                   // Check duplicate report
     Task<LabReport> CreateLabReportAsync(LabReport labReport);  // Save LabReport
     Task UpdateLabTestStatusAsync(int testId);
+    Task<IEnumerable<LabReport>> GetReportsByTestIdAsync(int testId);
 }

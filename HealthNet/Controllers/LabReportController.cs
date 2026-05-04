@@ -15,17 +15,15 @@ namespace HealthNet.Controllers
     public class LabReportController : ControllerBase
     {
         private readonly ILabReportService _labReportService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
 
         // <summary>
         // Constructor for initializing fields
         // </summary>
         // <param name="labReportService"> labReportService object to use the methods in it. </param>
         // <param name="webHostEnvironment"> webHostEnvironment object to get the wwwroot path for file storage. </param>
-        public LabReportController(ILabReportService labReportService, IWebHostEnvironment webHostEnvironment)
+        public LabReportController(ILabReportService labReportService)
         {
             _labReportService = labReportService;
-            _webHostEnvironment = webHostEnvironment;
         }
 
         // <summary>
@@ -48,11 +46,8 @@ namespace HealthNet.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 int userId = int.Parse(userIdClaim!);
 
-                // Get wwwroot path for file storage
-                string webRootPath = _webHostEnvironment.WebRootPath
-                                     ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-                var result = await _labReportService.UploadLabReportAsync(request, userId, webRootPath);
+                // Call the service method to upload the lab report
+                var result = await _labReportService.UploadLabReportAsync(request, userId);
 
                 return Ok(new
                 {
@@ -68,6 +63,95 @@ namespace HealthNet.Controllers
             catch (HealthNetException ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // <summary>
+        // GetReportsByTestIdAsync — returns all reports for a specific lab test
+        // </summary>
+        // <param name="id"> TestId from route </param>
+        [HttpGet("test/{id}")]
+        [Authorize(Roles = $"{Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer},{Roles.Researcher},{Roles.Admin},{Roles.ComplianceOfficer}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetReportsByTestIdAsync(int id)
+        {
+            try
+            {
+                // Validate id - no negative numbers
+                if (id <= 0)
+                {
+                    return BadRequest(new { success = false, message = LabReportHelper.InvalidTestIdMessage });
+                }
+
+                // Extract userId from JWT for AuditLog
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+
+                var result = await _labReportService.GetReportsByTestIdAsync(id, userId);
+
+                if (result == null)
+                {
+                    return NotFound(new { success = false, message = LabReportHelper.NoReportsFoundMessage(id) });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    data    = result
+                });
+            }
+            catch (HealthNetException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+            // <summary>
+        // DownloadReportAsync — downloads lab report file by TestId
+        // </summary>
+        // <param name="testId"> TestId from route </param>
+        [HttpGet("test/{testId}/download")]
+        [Authorize(Roles = $"{Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer},{Roles.Researcher},{Roles.Admin},{Roles.ComplianceOfficer}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> DownloadReportAsync(int testId)
+        {
+            try
+            {
+                // Validate testId
+                if (testId <= 0)
+                {
+                    return BadRequest(new { success = false, message = LabReportHelper.InvalidTestIdMessage });
+                }
+
+                // Extract userId
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+                
+                var (fileData, fileName, contentType) = await _labReportService.DownloadReportAsync(testId, userId);
+                
+                // Return file as a downloadable response
+                return File(fileData, contentType, fileName);
+            }
+            catch (HealthNetException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
             {

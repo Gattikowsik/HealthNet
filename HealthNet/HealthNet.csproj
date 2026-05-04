@@ -19,15 +19,25 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="DTOs\AuditDTO\" />
     <Folder Include="DTOs\ComplianceRecordDto\" />
+    <Folder Include="DTOs\MedicalRecordDto\" />
     <Folder Include="DTOs\LabReportDTO\" />
     <Folder Include="DTOs\OutbreakMonitoringDTO\" />
     <Folder Include="DTOs\PatientDto\" />
+    <Folder Include="Repository\AuditRepository\" />
     <Folder Include="DTOs\ReportingAndAnalyticsDTO\" />
     <Folder Include="Repository\CitizenSymptomReportingRepository\LabReportRepo\" />
     <Folder Include="Repository\ComplianceRecord\" />
+    <Folder Include="Repository\MedicalRepository\" />
+    <Folder Include="Repository\PatientRepository\" />
+    <Folder Include="Services\" />
+    <Folder Include="Services\ComplianceRecordServices\" />
+    <Folder Include="Services\MedicalServices\" />
     <Folder Include="Repository\LabReportRepo\" />
     <Folder Include="Repository\PatientRepository\" />
+    <Folder Include="Services\" />
+    <Folder Include="Services\AuditService\" />
     <Folder Include="Services\ComplianceRecordServices\" />
     <Folder Include="Services\LabReportServices\" />
     <Folder Include="Services\OutbreakMonitoringServices\" />

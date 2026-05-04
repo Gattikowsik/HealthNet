@@ -26,6 +26,7 @@ using HealthNet.Services.AuditService;
 using HealthNet.Repository.AuditRepository;
 using HealthNet.Repository.ReportingAndAnalytics;
 using HealthNet.Services.ReportingAndAnalyticsServices;
+using HealthNet.Services.AutoTriage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +49,8 @@ builder.Services.AddScoped<IMedicalRecordRepository, MedicalRecordRepository>();
 builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
 builder.Services.AddScoped<IOutbreakMonitoringServices, OutbreakMonitoringServices>();
 builder.Services.AddScoped<IOutBreakMonitoringRepository, OutbreakMonitoringRepository>();
-
+builder.Services.AddScoped<ISymptomRiskEvaluator, SymptomRiskEvaluator>();
+builder.Services.AddHostedService<AutoTriageBackgroundService>();
 builder.Services.AddScoped<IPatientManagementRepository,PatientManagementRepository>();
 builder.Services.AddScoped<IPatientManagementService,PatientManagementService>();
 builder.Services.AddScoped<IOutbreakMonitoringServices,OutbreakMonitoringServices>();

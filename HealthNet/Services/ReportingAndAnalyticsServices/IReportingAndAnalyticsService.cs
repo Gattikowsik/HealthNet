@@ -6,4 +6,5 @@ public interface IReportingAndAnalyticsService
 {
     Task<OutbreakAnalyticsReportResponse> OutbreakAnalyticsReportService(OutbreakAnalyticsReportRequest request);
     Task<PatientAnalyticsReportResponse> PatientAnalyticsReportService(PatientAnalyticsReportRequest request);
+    Task<ComplianceMetricsReportResponse> ComplianceMetricsReportService(ComplianceMetricsReportRequest request);
 }

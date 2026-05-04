@@ -160,4 +160,59 @@ public class ReportingAndAnalyticsService : IReportingAndAnalyticsService
             throw new HealthNetException("An Error occured while retrieving the Patients data "+ex.InnerException);
         }
     }
+
+    // Get Compliance Records and Metrics Service
+    /// <summary>
+    /// The request will be validated and sent to the repository.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    /// DTO which consist of Message,and Compliance Records else Error Message
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<ComplianceMetricsReportResponse> ComplianceMetricsReportService(ComplianceMetricsReportRequest request)
+    {
+        try
+        {
+            // Validate Date field
+            var presentDateTime = DateTime.UtcNow;
+            if(presentDateTime < request.DateFilter)
+            {
+                return new ComplianceMetricsReportResponse
+                {
+                    Success = false,
+                    Message = "Date Cannot be in Future."
+                };
+            }
+
+            // Validate Type field
+            var allowedTypes = new[] { "case", "test", "outbreak" };
+            if(!string.IsNullOrWhiteSpace(request.TypeFilter) && !allowedTypes.Contains(request.TypeFilter.ToLower()))
+            {
+                return new ComplianceMetricsReportResponse
+                {
+                    Success = false,
+                    Message = "Type Must be one of these case, test, outbreak"
+                };
+            }
+
+            // Validate Result field
+            var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
+            if(!string.IsNullOrWhiteSpace(request.ResultFilter) && !allowedResults.Contains(request.ResultFilter.ToLower()))
+            {
+                return new ComplianceMetricsReportResponse
+                {
+                    Success = false,
+                    Message = "Result must be one of these types compliant non compliant partially compliant pending review"
+                };
+            }
+
+            return await _repository.ComplianceMetricsReport(request);
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException("An Error occured while retrieving Compliance records data "+ex.Message);
+        }
+    }
+
 }

@@ -147,4 +147,52 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
             throw new HealthNetException("An Error occured while fetching the Patients records "+ex.Message);
         }
     }
+
+    /// <summary>
+    /// Get Compliance records from the Database
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    ///  The Compliance records and metrics from the DB
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<ComplianceMetricsReportResponse> ComplianceMetricsReport(ComplianceMetricsReportRequest request)
+    {
+        try
+        {
+            var query = _context.ComplianceRecords.AsQueryable();
+
+            if (request.DateFilter.HasValue)
+            {
+                query = query.Where(cr => cr.Date.Date == request.DateFilter || cr.Date == request.DateFilter);
+            }
+            if (!string.IsNullOrWhiteSpace(request.TypeFilter))
+            {
+                query = query.Where(cr => cr.Type != null && cr.Type.ToLower().Equals(request.TypeFilter.ToLower()));
+            }
+            if (!string.IsNullOrWhiteSpace(request.ResultFilter))
+            {
+                query = query.Where(cr => cr.Result.ToLower().Equals(request.ResultFilter.ToLower()));
+            }
+
+            var data = await query.ToListAsync();
+            int complaintRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.Compliant));
+            int totalRecords = data.Count;
+            return new ComplianceMetricsReportResponse
+            {
+                Success = true,
+                TotalCompliances = totalRecords,
+                CompliantRecords = complaintRecords,
+                NonCompliantRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.NonComplaint)),
+                PartiallyCompliantRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.PartiallyCompliant)),
+                PendingReviewRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.PendingReview)),
+                CompleteDocPercentage = totalRecords!=0 ? Math.Round((double)complaintRecords/totalRecords*100,2) : 0,
+                Data = data
+            };
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException("An Error occured while retrieving the Compliance Metric records "+ex.Message);
+        }
+    }
 }

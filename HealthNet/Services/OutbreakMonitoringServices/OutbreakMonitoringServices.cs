@@ -226,4 +226,54 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             Message = $"Outbreak updated successfully for Id {outbreakId}"
         };
     }
+    public async Task<AddEpidemiologyResponseDto> AddEpidemiologyService(int userId, int outbreakId, AddEpidemiologyRequestDto request)
+    {
+        //  MetricsJSON validatio
+        if (string.IsNullOrWhiteSpace(request.MetricsJSON))
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "MetricsJSON cannot be empty"
+            };
+        }
+        // Date must NOT be future
+        if (request.Date.Date > DateTime.UtcNow.Date)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be a future date"
+            };
+        }
+        //  Outbreak existence check
+        if (!await _repository.OutbreakExistsAsync(outbreakId))
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Outbreak not found"
+            };
+        }
+        // Create Epidemiology record
+        var epi = new Epidemiology
+        {
+            OutbreakId = outbreakId,
+            MetricsJSON = request.MetricsJSON,
+            Date = request.Date,
+            Status = request.Status
+        };
+
+        int epiId = await _repository.AddEpidemiologyAsync(epi);
+
+        await _repository.AddAuditLogAsync(userId, "Create", "Epidemiology");
+
+        return new AddEpidemiologyResponseDto
+        {
+            Success = true,
+            Message = "Epidemiology metrics stored successfully",
+            EpiId = epiId
+        };
+    }
+
 }

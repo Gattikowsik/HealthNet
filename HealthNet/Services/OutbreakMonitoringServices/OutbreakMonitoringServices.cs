@@ -275,5 +275,19 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             EpiId = epiId
         };
     }
+    public async Task<List<GetActiveOutbreaksResponseDto>> GetAllActiveOutbreaksService()
+    {
+        var outbreaks = await _repository.GetAllActiveOutbreaksAsync();
 
+        return outbreaks.Select(o => new GetActiveOutbreaksResponseDto
+        {
+            OutbreakId = o.OutbreakId,
+            Disease = o.Disease,
+            Location = o.Location,
+            StartDate = o.StartDate,
+            EndDate = o.EndDate,
+            Severity = o.Severity,
+            Status = o.Status
+        }).ToList();
+    }
 }

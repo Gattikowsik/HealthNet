@@ -163,4 +163,19 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
         await _context.SaveChangesAsync();
         return epidemiology.EpiId;
     }
+    public async Task<List<Outbreak>> GetAllActiveOutbreaksAsync()
+    {
+        try
+        {
+            return await _context.Outbreaks
+                .AsNoTracking()
+                .Where(o => o.Status == true) // ALL ACTIVE
+                .OrderByDescending(o => o.StartDate)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException("Error while retrieving active outbreaks: " + ex.Message);
+        }
+    }
 }

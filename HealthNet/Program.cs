@@ -20,6 +20,8 @@ using HealthNetDb.Entities;
 using HealthNet.Utility;
 using HealthNet.Repository.LabReportRepo;
 using HealthNet.Services.LabReportServices;
+using HealthNet.Services.AuditService;
+using HealthNet.Repository.AuditRepository;
 using HealthNet.Repository.ReportingAndAnalytics;
 using HealthNet.Services.ReportingAndAnalyticsServices;
 
@@ -44,6 +46,8 @@ builder.Services.AddScoped<IOutbreakMonitoringServices,OutbreakMonitoringService
 builder.Services.AddScoped<IOutBreakMonitoringRepository,OutbreakMonitoringRepository>();
 builder.Services.AddScoped<ILabReportRepository, LabReportRepository>();
 builder.Services.AddScoped<ILabReportService, LabReportService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddHttpClient<LocationHelper>();
 builder.Services.AddScoped<IReportingAndAnalyticsRepository,ReportingAndAnalyticsRepository>();
 builder.Services.AddScoped<IReportingAndAnalyticsService,ReportingAndAnalyticsService>();

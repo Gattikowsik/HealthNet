@@ -12,4 +12,5 @@ public interface ISubmitSymptomReportService
     Task<PagedResponseDto<SymptomReportResponseDto>>GetAllAsync(int userId, int? citizenId, DateTime? reportDate, 
         SymptomStatus? status, int pageNumber, int pageSize);
     Task<bool> UpdateStatusAsync(int reportId, SymptomStatus newStatus, int userId);
+    Task<bool> SoftDeleteAsync(int reportId, int userId);
 }

@@ -125,5 +125,24 @@ namespace HealthNet.Controllers
                 return BadRequest(ex.Message);  // "Invalid status value"
             }
         }
+        // <summary>
+        // DeleteReportAsync — softdelete the status for the symptom report (for Doctor/Public Health Officer/Admin)
+        // </summary>
+        // <param name="request"> DeleteSymptomStatusRequest DTO for data transfer from client </param>
+        //Doctor / Public Health Officer / Admin – Delete symptom reports
+        [HttpDelete("{reportId}")]
+        [Authorize(Roles = "Doctor,PHO")]
+        public async Task<IActionResult> DeleteReport(int reportId)
+        {
+            var userId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var deleted = await _service.SoftDeleteAsync(reportId, userId);
+
+            if (!deleted)
+                return NotFound(new { message = "Symptom report not found." });
+
+            return Ok(new { message = "Symptom report deleted successfully." });
+        }
     }
 }

@@ -21,6 +21,24 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         _paginationService = paginationService;
     }
 
+    //public async Task<bool> DeleteReportAsync(int reportId)
+    //{
+    //    var report = await _context.SymptomReports
+    //        .FirstOrDefaultAsync(r => r.ReportId == reportId);
+
+    //    if (report == null)
+    //        return false;
+
+    //    // ✅ Soft delete by status change
+    //    if (report.Status != SymptomStatus.Closed)
+    //    {
+    //        report.Status = SymptomStatus.Closed;
+    //        await _context.SaveChangesAsync();
+    //    }
+
+    //    return true;
+    //}
+
     public async Task<PagedResponseDto<SymptomReportResponseDto>> GetAllAsync(int userId, int? citizenId, DateTime? reportDate, SymptomStatus? status, int pageNumber, int pageSize)
     {
         // If citizenId filter is provided, validate citizen existence
@@ -117,6 +135,44 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         _context.AuditLogs.Add(auditLog);
         await _context.SaveChangesAsync();
         return result;
+    }
+
+    public async Task<bool> SoftDeleteAsync(int reportId, int userId)
+    {
+        var report = await _context.SymptomReports
+            .IgnoreQueryFilters() // allow access even if already deleted
+            .FirstOrDefaultAsync(r => r.ReportId == reportId);
+
+        if (report == null)
+            return false;
+
+        //  Idempotent delete
+        if (report.IsDeleted)
+            return true;
+
+        //  SOFT DELETE
+        report.IsDeleted = true;
+
+        //  ALSO MARK STATUS AS CLOSED (4)
+        report.Status = SymptomStatus.Closed;
+
+        //  Fetch DELETE action id
+        var deleteActionId = await _context.Actions
+            .Where(a => a.ActionName == "DELETE")
+            .Select(a => a.ActionId)
+            .SingleAsync();
+
+        //  Save audit log ONLY for delete
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,                       // Doctor / PHO
+            ActionId = deleteActionId,             // DELETE
+            Resource = $"SymptomReport:{reportId}",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<SubmitSymptomReportResponseDto> SubmitAsync(SubmitSymptomReportRequestDto request, int citizenId)

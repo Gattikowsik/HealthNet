@@ -123,6 +123,11 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
 
             if (!outbreak.Status)
                 return UpdateOutbreakResult.Closed;
+            // Safety check (service already validates this)
+            if (request.EndDate < outbreak.StartDate)
+            {
+                throw new HealthNetException("End date cannot be earlier than the start date");
+            }
             bool hasChanges = false;
             if (!string.Equals(outbreak.Severity, request.Severity, StringComparison.OrdinalIgnoreCase))
             {
@@ -170,7 +175,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
             return await _context.Outbreaks
                 .AsNoTracking()
                 .Where(o => o.Status == true) // ALL ACTIVE
-                .OrderByDescending(o => o.StartDate)
+                .OrderBy(o => o.OutbreakId)
                 .ToListAsync();
         }
         catch (Exception ex)

@@ -193,6 +193,30 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                 Message = "End date cannot be a future date"
             };
         }
+        //FETCH EXISTING OUTBREAK FIRST
+        var existingOutbreak = await _repository.GetOutbreakByIdAsync(outbreakId);
+        if (existingOutbreak == null)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "Outbreak not found"
+            };
+        }
+        //EndDate vs StartDate validation
+        if (request.EndDate < existingOutbreak.StartDate)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "End date cannot be earlier than the start date"
+            };
+        }
+        //Auto-close if EndDate is in the past
+        if (request.EndDate.Date < DateTime.UtcNow.Date)
+        {
+            request.Status = false; 
+        }
         var result = await _repository.UpdateOutbreakAsync(outbreakId, request);
         if (result == UpdateOutbreakResult.NotFound)
         {

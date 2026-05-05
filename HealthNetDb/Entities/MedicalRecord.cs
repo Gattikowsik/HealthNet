@@ -30,7 +30,7 @@ public class MedicalRecord
     public DateOnly Date { get; set; }
 
     [Required]
-    public PatientStatus Status { get; set; }     //Active or Inactive
+    public MedicalRecordStatus Status { get; set; }     //Active or Inactive
 
     public virtual Patient PatientNavigation { get; set; } = null!;
 }

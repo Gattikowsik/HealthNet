@@ -19,7 +19,4 @@ public class RegisterPatientRequestDto
 
     [Required]
     public string ContactInfo { get; set; } = null!;
-
-    [Required]
-    public PatientStatus Status { get; set; }
 }

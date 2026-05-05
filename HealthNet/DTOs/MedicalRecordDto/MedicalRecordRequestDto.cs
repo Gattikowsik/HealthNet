@@ -14,7 +14,4 @@ public class MedicalRecordRequestDto
 
     [Required]
     public DateOnly Date { get; set; }
-
-    [Required]
-    public PatientStatus Status { get; set; }
 }

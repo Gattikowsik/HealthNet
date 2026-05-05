@@ -46,7 +46,7 @@ public class MedicalRecordService : IMedicalRecordService
         var lastRecord = await _repository.GetLatestRecordByPatientIdAsync(patientId);
 
         if (lastRecord != null &&
-            lastRecord.Status != PatientStatus.InActive)
+            lastRecord.Status == MedicalRecordStatus.Active)
         {
             return new MedicalRecordResponseDto
             {
@@ -63,7 +63,7 @@ public class MedicalRecordService : IMedicalRecordService
             Diagnosis = dto.Diagnosis,
             TreatmentPlan = dto.TreatmentPlan,
             Date = dto.Date,
-            Status = dto.Status
+            Status = MedicalRecordStatus.Active
         };
 
         var saved = await _repository.AddAsync(record);
@@ -93,7 +93,7 @@ public class MedicalRecordService : IMedicalRecordService
             RecordId = saved.RecordId
         };
     }
-    public async Task<Dictionary<DateOnly, List<MedicalRecordGetDto>>> GetPatientRecordsAsync(int patientId,int userId)
+    public async Task<List<KeyValuePair<DateOnly, List<MedicalRecordGetDto>>>> GetPatientRecordsAsync(int patientId, int userId)
     {
 
         bool patientExists = await _context.Patients
@@ -107,12 +107,15 @@ public class MedicalRecordService : IMedicalRecordService
         var records = await _repository.GetRecordsByPatientIdAsync(patientId);
         await AddAuditLog(userId, "Read");
         return records
-            .OrderByDescending(r => r.Date)
+        .OrderByDescending(r => r.Date)
             .GroupBy(r => r.Date)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(MapFull).ToList()
-            );
+            .Select(g =>
+                new KeyValuePair<DateOnly, List<MedicalRecordGetDto>>(
+                    g.Key,
+                    g.Select(MapFull).ToList()
+                )
+            )
+            .ToList();
     }
 
     private static MedicalRecordGetDto MapFull(MedicalRecord record)
@@ -122,7 +125,6 @@ public class MedicalRecordService : IMedicalRecordService
             Date = record.Date,
             Diagnosis = record.Diagnosis,
             TreatmentPlan = record.TreatmentPlan,
-            Status = record.Status.ToString()
         };
     }
 

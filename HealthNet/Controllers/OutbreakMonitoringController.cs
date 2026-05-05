@@ -79,5 +79,30 @@ namespace HealthNet.Controllers
             }
             return Ok(response);
         }
+        // Add Epidemiology Metrics
+        [HttpPut("{outbreakId}/epidemiology")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> AddEpidemiologyAsync(
+            int outbreakId,
+            [FromBody] AddEpidemiologyRequestDto request)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var response = await _outbreakMonitoringServices
+                .AddEpidemiologyService(userId, outbreakId, request);
+
+            if (!response.Success)
+            {
+                if (response.Message.Contains("not found"))
+                    return NotFound(response.Message);
+
+                return BadRequest(response.Message);
+            }
+
+            return Ok(response);
+        }
     }
 }

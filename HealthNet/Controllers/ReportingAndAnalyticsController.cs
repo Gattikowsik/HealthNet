@@ -28,7 +28,7 @@ namespace HealthNet.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetOutbreakAnalytics([FromQuery]OutbreakAnalyticsReportRequest request)
+        public async Task<IActionResult> GetOutbreakAnalytics([FromQuery] OutbreakAnalyticsReportRequest request)
         {
             var response = await _reportingAndAnalyticsService.OutbreakAnalyticsReportService(request);
             if (!response.Success)
@@ -47,7 +47,7 @@ namespace HealthNet.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetPatientAnalytics([FromQuery]PatientAnalyticsReportRequest request)
+        public async Task<IActionResult> GetPatientAnalytics([FromQuery] PatientAnalyticsReportRequest request)
         {
             var response = await _reportingAndAnalyticsService.PatientAnalyticsReportService(request);
             if (!response.Success)
@@ -74,6 +74,25 @@ namespace HealthNet.Controllers
             if (!response.Success)
             {
                 return BadRequest(response?.Message);
+            }
+
+            return Ok(response);
+        }
+
+        // <summary>
+        // GetEpidemiologyTrendRecords — Get Epidemiology Trends Records for given Query Filters
+        // </summary>
+        // <param name="request"> EpidemiologicalAnalyticsReportRequest DTO for data transfer from client </param>
+        [HttpGet("epidemiology")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetEpidemiologyTrendRecords([FromQuery] EpidemiologicalAnalyticsReportRequest request)
+        {
+            var response = await _reportingAndAnalyticsService.EpidemiologicalReportService(request);
+            if (!response.Success)
+            {
+                return BadRequest(response.Message);
             }
 
             return Ok(response);

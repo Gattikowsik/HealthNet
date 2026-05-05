@@ -1,6 +1,7 @@
 using System;
 using HealthNet.DTOs.AuditDTO;
 using HealthNetDb.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthNet.Repository.AuditRepository;
 
@@ -41,4 +42,21 @@ public class AuditRepository : IAuditRepository
             AuditId = audit.AuditId
         };
     }
+
+    /// <summary>
+    /// Closes an audit by setting Status = true (closed).
+    /// </summary>
+    /// <param name="auditId">The ID of the audit to close.</param>
+    /// <returns>true if closed successfully, false if not found.</returns>
+    public async Task CloseAuditAsync(int auditId)
+    {
+        // Find the audit by ID
+        var audit = await _context.Audits.FirstOrDefaultAsync(a => a.AuditId == auditId);
+
+        // Set Status to false = closed
+        audit.Status = false;
+        await _context.SaveChangesAsync();
+
+    }
+
 }

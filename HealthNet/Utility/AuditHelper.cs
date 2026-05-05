@@ -4,7 +4,7 @@ namespace HealthNet.Utility;
 
 public class AuditHelper
 {
-        // If the request body is null
+    // If the request body is null
     public const string BadRequest = "Invalid Request.";
 
     // If scope is empty
@@ -22,4 +22,9 @@ public class AuditHelper
     public const string InvalidScope = "Scope must be a meaningful text, not a placeholder or number.";
     public const string InvalidFindings = "Findings must be a meaningful text, not a placeholder or number.";
     public const string StatusRequired = "Status is required. Please provide true or false.";
+    // If the audit is not found
+    public const string AuditNotFound = "No audit found with the given ID.";
+
+    // If the audit is already closed
+    public const string AuditAlreadyClosed = "This audit is already closed.";
 }

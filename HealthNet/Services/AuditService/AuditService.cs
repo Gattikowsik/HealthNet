@@ -85,4 +85,49 @@ public class AuditService : IAuditService
         }
     }
 
+    // <summary>
+    // Closes an audit by setting Status = true (closed)
+    // </summary>
+    // <param name="auditId"> ID of the audit to close </param>
+    // <param name="officerId"> OfficerId extracted from JWT token </param>
+    public async Task CloseAuditAsync(int auditId, int userId)
+    {
+        // ── STEP 1: Check if audit exists and is not already closed ─
+        var audit = await _context.Audits.FirstOrDefaultAsync(a => a.AuditId == auditId);
+
+        if (audit == null)
+            throw new KeyNotFoundException(AuditHelper.AuditNotFound);
+
+        if (audit.Status == false)
+            throw new ArgumentException(AuditHelper.AuditAlreadyClosed);
+
+        try
+        {
+            // ── STEP 2: Close the audit via repository ──────────────
+            await _repository.CloseAuditAsync(auditId);
+
+            // ── STEP 3: Get ActionId for "Update" ──────────────────
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Update")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // ── STEP 4: Log to AuditLog ────────────────────────────
+            var auditLog = new HealthNetDb.Entities.AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,       // "Update" action
+                Resource  = "Audit",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception(AuditHelper.GenericError);
+        }
+    }
+
 }

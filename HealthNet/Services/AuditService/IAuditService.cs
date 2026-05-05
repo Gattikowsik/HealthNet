@@ -6,4 +6,5 @@ namespace HealthNet.Services.AuditService;
 public interface IAuditService
 {
     Task<AuditResponseDto> AddAuditAsync(CreateAuditDto request, int userId);
+    Task CloseAuditAsync(int auditId, int userId);
 }

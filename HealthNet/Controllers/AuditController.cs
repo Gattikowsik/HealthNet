@@ -52,5 +52,39 @@ namespace HealthNet.Controllers
                 return StatusCode(500, AuditHelper.GenericError); // 500 — unexpected error
             }
         }
+
+        /// <summary>
+        /// Endpoint to close an audit by setting Status = true (closed).
+        /// Only accessible by Compliance Officer and Public Health Officer roles.
+        /// </summary>
+        /// <param name="id"> The ID of the audit to close </param>
+        /// <returns> 200 OK if closed successfully </returns>
+        [HttpPatch("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> CloseAuditAsync(int id)
+        {
+            try
+            {
+                var officerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(officerIdClaim!);
+
+                await _auditService.CloseAuditAsync(id, userId);
+                return Ok("Audit closed successfully.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);   // 404 — audit not found
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message); // 400 — already closed
+            }
+            catch
+            {
+                return StatusCode(500, AuditHelper.GenericError);
+            }
+        }
     }
 }

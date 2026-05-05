@@ -23,7 +23,7 @@ namespace HealthNet.Controllers
             _service = service;
         }
         [HttpPost]
-        [Authorize(Roles = "Citizen,Admin")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Citizen}")]
         public async Task<IActionResult> Submit(
     [FromBody] SubmitSymptomReportRequestDto request)
         {
@@ -58,7 +58,7 @@ namespace HealthNet.Controllers
         // <param name="request"> SymptomReportResponse DTO for data transfer from client </param>
         // Citizen ONLY – View ONLY his own reports
         [HttpGet("mine")]
-        [Authorize(Roles = "Citizen")]
+        [Authorize(Roles = $"{Roles.Citizen}")]
         public async Task<IActionResult> GetMyReports(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
@@ -74,7 +74,7 @@ namespace HealthNet.Controllers
         // <param name="request"> SymptomReportResponse DTO for data transfer from client </param>
         //Doctor / Researcher / Admin – View ALL symptom reports
         [HttpGet]
-        [Authorize(Roles = "Doctor,Researcher,Admin")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.Researcher}")]
         public async Task<IActionResult> GetAllReports(
         [FromQuery] int? citizenId,
         [FromQuery] DateTime? reportDate,
@@ -106,7 +106,7 @@ namespace HealthNet.Controllers
         // <param name="request"> UpdateSymptomStatusRequest DTO for data transfer from client </param>
         //Doctor / Public Health Officer / Admin – View ALL symptom reports
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Doctor,Public Health Officer,Admin")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateSymptomStatusRequestDto request)
         {
             try
@@ -124,6 +124,25 @@ namespace HealthNet.Controllers
             {
                 return BadRequest(ex.Message);  // "Invalid status value"
             }
+        }
+        // <summary>
+        // DeleteReportAsync — softdelete the status for the symptom report (for Doctor/Public Health Officer/Admin)
+        // </summary>
+        // <param name="request"> DeleteSymptomStatusRequest DTO for data transfer from client </param>
+        //Doctor / Public Health Officer / Admin – Delete symptom reports
+        [HttpDelete("{reportId}")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
+        public async Task<IActionResult> DeleteReport(int reportId)
+        {
+            var userId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var deleted = await _service.SoftDeleteAsync(reportId, userId);
+
+            if (!deleted)
+                return NotFound(new { message = "Symptom report not found." });
+
+            return Ok(new { message = "Symptom report deleted successfully." });
         }
     }
 }

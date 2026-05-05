@@ -116,6 +116,13 @@ public class HealthNetContext : DbContext
             .WithMany()
             .HasForeignKey(mr => mr.PatientId)
             .OnDelete(DeleteBehavior.Cascade); //Ok to Delete
+
+        // Configure SymptomReport -> Docotr
+        // apply cascade OnDelete to SymptomReport
+        modelBuilder.Entity<SymptomReport>()
+                .HasQueryFilter(r => !r.IsDeleted);
+        base.OnModelCreating(modelBuilder);
+
     }
 
 }

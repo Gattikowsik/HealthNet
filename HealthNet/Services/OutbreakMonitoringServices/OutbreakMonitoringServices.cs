@@ -16,7 +16,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
     {
         _repository = repository;
         _locationHelper = locationHelper;
-    } 
+    }
 
     // Add Outbreak Service
     /// <summary>
@@ -76,7 +76,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                     Message = "Location must be of atleast 3 Characters length."
                 };
             }
-            
+
             bool isValidLocation = await _locationHelper.LocationValidatorAsync(request.Location);
             if (!isValidLocation)
             {
@@ -129,7 +129,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             int outbreakid = await _repository.AddOutbreakAsync(request);
 
             // Record it in Audit Log if Every thing works well
-            await _repository.AddAuditLogAsync(userId, "Outbreak");
+            await _repository.AddAuditLogAsync(userId, "Create", "Outbreak");
 
             // Return the result 
             return new CreateOutbreakResponseDto
@@ -139,9 +139,179 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                 OutbreakId = outbreakid,
             };
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             throw new HealthNetException(ex.Message);
         }
+    }
+    //GetOutbreakById
+    public async Task<GetOutbreakResponseDto?> GetOutbreakByIdService(int outbreakId)
+    {
+        var outbreak = await _repository.GetOutbreakByIdAsync(outbreakId);
+        if (outbreak == null)
+            return null;
+        return new GetOutbreakResponseDto
+        {
+            OutbreakId = outbreak.OutbreakId,
+            Disease = outbreak.Disease,
+            Location = outbreak.Location,
+            StartDate = outbreak.StartDate,
+            EndDate = outbreak.EndDate,
+            Severity = outbreak.Severity,
+            Status = outbreak.Status
+        };
+    }
+
+    //updating outreak
+    public async Task<UpdateOutbreakResponseDto> UpdateOutbreakService(int userId, int outbreakId, UpdateOutbreakRequestDto request)
+    {
+        // Severity empty check
+        if (string.IsNullOrWhiteSpace(request.Severity))
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "Severity cannot be empty"
+            };
+        }
+        // Allowed severity values
+        var allowedSeverity = new[] { "Low", "Medium", "High" };
+        if (!allowedSeverity.Contains(request.Severity, StringComparer.OrdinalIgnoreCase))
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "Severity must be Low, Medium, or High"
+            };
+        }
+        // End date validation
+        if (request.EndDate.Date > DateTime.UtcNow.Date)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "End date cannot be a future date"
+            };
+        }
+        //FETCH EXISTING OUTBREAK FIRST
+        var existingOutbreak = await _repository.GetOutbreakByIdAsync(outbreakId);
+        if (existingOutbreak == null)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "Outbreak not found"
+            };
+        }
+        //EndDate vs StartDate validation
+        if (request.EndDate < existingOutbreak.StartDate)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "End date cannot be earlier than the start date"
+            };
+        }
+        //Auto-close if EndDate is in the past
+        if (request.EndDate.Date < DateTime.UtcNow.Date)
+        {
+            request.Status = false; 
+        }
+        var result = await _repository.UpdateOutbreakAsync(outbreakId, request);
+        if (result == UpdateOutbreakResult.NotFound)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "Outbreak not found"
+            };
+        }
+        //status validation
+        if (result == UpdateOutbreakResult.Closed)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "This outbreak is already closed and cannot be updated."
+            };
+        }
+        if (result == UpdateOutbreakResult.NoChanges)
+        {
+            return new UpdateOutbreakResponseDto
+            {
+                Success = false,
+                Message = "No changes detected. Update request has no effect."
+            };
+        }
+        await _repository.AddAuditLogAsync(userId, "Update", "Outbreak");
+        return new UpdateOutbreakResponseDto
+        {
+            Success = true,
+            Message = $"Outbreak updated successfully for Id {outbreakId}"
+        };
+    }
+    public async Task<AddEpidemiologyResponseDto> AddEpidemiologyService(int userId, int outbreakId, AddEpidemiologyRequestDto request)
+    {
+        //  MetricsJSON validatio
+        if (string.IsNullOrWhiteSpace(request.MetricsJSON))
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "MetricsJSON cannot be empty"
+            };
+        }
+        // Date must NOT be future
+        if (request.Date.Date > DateTime.UtcNow.Date)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be a future date"
+            };
+        }
+        //  Outbreak existence check
+        if (!await _repository.OutbreakExistsAsync(outbreakId))
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Outbreak not found"
+            };
+        }
+        // Create Epidemiology record
+        var epi = new Epidemiology
+        {
+            OutbreakId = outbreakId,
+            MetricsJSON = request.MetricsJSON,
+            Date = request.Date,
+            Status = request.Status
+        };
+
+        int epiId = await _repository.AddEpidemiologyAsync(epi);
+
+        await _repository.AddAuditLogAsync(userId, "Create", "Epidemiology");
+
+        return new AddEpidemiologyResponseDto
+        {
+            Success = true,
+            Message = "Epidemiology metrics stored successfully",
+            EpiId = epiId
+        };
+    }
+    public async Task<List<GetActiveOutbreaksResponseDto>> GetAllActiveOutbreaksService()
+    {
+        var outbreaks = await _repository.GetAllActiveOutbreaksAsync();
+
+        return outbreaks.Select(o => new GetActiveOutbreaksResponseDto
+        {
+            OutbreakId = o.OutbreakId,
+            Disease = o.Disease,
+            Location = o.Location,
+            StartDate = o.StartDate,
+            EndDate = o.EndDate,
+            Severity = o.Severity,
+            Status = o.Status
+        }).ToList();
     }
 }

@@ -17,6 +17,10 @@ public class LabReport
     [Required]
     public string FileURI { get; set; } = null!;    //Report file URL
 
+    [Column(TypeName = "VARBINARY(MAX)")]
+    [Required]
+    public byte[] FileData { get; set; } = null!;   // Actual file data stored in the database
+
     [Required]
     public DateTime Date { get; set; } //Date & Time of the test
 

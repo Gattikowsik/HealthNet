@@ -23,47 +23,32 @@ namespace HealthNet.Controllers
             _service = service;
         }
         [HttpPost]
-        [Authorize(Roles = "Citizen,Admin")]
-        public async Task<IActionResult> Submit([FromBody] SubmitSymptomReportRequestDto request)
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Citizen}")]
+        public async Task<IActionResult> Submit(
+    [FromBody] SubmitSymptomReportRequestDto request)
         {
-            // Model validation (Required fields etc.)
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var today = DateTime.UtcNow.Date;
-            if (request.Date.Date != today)
-            {
-                ModelState.AddModelError(nameof(request.Date), "Symptom date must be today's date.");
-                return BadRequest(ModelState);
-            }
-
-            // JSON validation using Utility
-            if (!SymptomReportHelper.IsValidJson(request.SymptomsJson))
-            {
-                ModelState.AddModelError(nameof(request.SymptomsJson),
-                    "SymptomsJson must be a valid JSON string");
-                return BadRequest(ModelState);              // 400 with details
-            }
-
-            //Get citizenId from JWT
-            var citizenId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-            //Call service
             try
             {
+                var citizenId = int.Parse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
                 var response = await _service.SubmitAsync(request, citizenId);
-                return Created($"/api/v1/Citizen Symptom Reporting/{response.ReportId}", response);
+
+                return Created(
+                    $"/api/v1/CitizenSymptomReporting/{response.ReportId}",
+                    response);
             }
-            catch (InvalidOperationException ex)
+            catch (HealthNetException ex) // MUST be this exact type
             {
-                return BadRequest(new
+                var problem = new ProblemDetails
                 {
-                    errors = new
-                    {
-                        SymptomReport = new[] { ex.Message }
-                    }
-                });
+                    Title = "Invalid request payload",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest,
+                    Type = "https://datatracker.ietf.org/doc/html/rfc7807"
+                };
+
+                return BadRequest(problem);
             }
         }
 
@@ -73,7 +58,7 @@ namespace HealthNet.Controllers
         // <param name="request"> SymptomReportResponse DTO for data transfer from client </param>
         // Citizen ONLY – View ONLY his own reports
         [HttpGet("mine")]
-        [Authorize(Roles = "Citizen")]
+        [Authorize(Roles = $"{Roles.Citizen}")]
         public async Task<IActionResult> GetMyReports(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
@@ -89,7 +74,7 @@ namespace HealthNet.Controllers
         // <param name="request"> SymptomReportResponse DTO for data transfer from client </param>
         //Doctor / Researcher / Admin – View ALL symptom reports
         [HttpGet]
-        [Authorize(Roles = "Doctor,Researcher,Admin")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.Researcher}")]
         public async Task<IActionResult> GetAllReports(
         [FromQuery] int? citizenId,
         [FromQuery] DateTime? reportDate,
@@ -121,7 +106,7 @@ namespace HealthNet.Controllers
         // <param name="request"> UpdateSymptomStatusRequest DTO for data transfer from client </param>
         //Doctor / Public Health Officer / Admin – View ALL symptom reports
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Doctor,Public Health Officer,Admin")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
         public async Task<IActionResult> UpdateStatus(int id, UpdateSymptomStatusRequestDto request)
         {
             try
@@ -139,6 +124,25 @@ namespace HealthNet.Controllers
             {
                 return BadRequest(ex.Message);  // "Invalid status value"
             }
+        }
+        // <summary>
+        // DeleteReportAsync — softdelete the status for the symptom report (for Doctor/Public Health Officer/Admin)
+        // </summary>
+        // <param name="request"> DeleteSymptomStatusRequest DTO for data transfer from client </param>
+        //Doctor / Public Health Officer / Admin – Delete symptom reports
+        [HttpDelete("{reportId}")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer}")]
+        public async Task<IActionResult> DeleteReport(int reportId)
+        {
+            var userId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var deleted = await _service.SoftDeleteAsync(reportId, userId);
+
+            if (!deleted)
+                return NotFound(new { message = "Symptom report not found." });
+
+            return Ok(new { message = "Symptom report deleted successfully." });
         }
     }
 }

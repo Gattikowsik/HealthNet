@@ -7,5 +7,5 @@ public interface IReportingAndAnalyticsRepository
     Task<OutbreakAnalyticsReportResponse> OutbreakAnalyticsReport(OutbreakAnalyticsReportRequest request);
     Task<PatientAnalyticsReportResponse> PatientAnalyticsReport(PatientAnalyticsReportRequest request);
     Task<ComplianceMetricsReportResponse> ComplianceMetricsReport(ComplianceMetricsReportRequest request);
-
+    Task<EpidemiologicalAnalyticsReportResponse> EpidemiologyAnalyticsReport(EpidemiologicalAnalyticsReportRequest request);
 }

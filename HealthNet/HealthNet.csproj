@@ -43,7 +43,6 @@
     <Folder Include="Services\OutbreakMonitoringServices\" />
     <Folder Include="Services\PatientServices\" />
     <Folder Include="Services\UserServices\" />
-    <Folder Include="Utility\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

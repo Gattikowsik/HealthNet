@@ -26,7 +26,8 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
     /// <exception cref="HealthNetException"></exception>
     public async Task<OutbreakAnalyticsReportResponse> OutbreakAnalyticsReport(OutbreakAnalyticsReportRequest request)
     {
-        try{
+        try
+        {
             var query = _context.Outbreaks.AsQueryable();
 
             if (request.StartDate.HasValue)
@@ -39,8 +40,8 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
             }
             if (!string.IsNullOrWhiteSpace(request.Status))
             {
-                bool isActive = request.Status?.Equals("Active",StringComparison.OrdinalIgnoreCase) ?? false;
-                bool isInActive = request.Status?.Equals("InActive",StringComparison.OrdinalIgnoreCase) ?? false;
+                bool isActive = request.Status?.Equals("Active", StringComparison.OrdinalIgnoreCase) ?? false;
+                bool isInActive = request.Status?.Equals("InActive", StringComparison.OrdinalIgnoreCase) ?? false;
                 if (isActive)
                 {
                     query = query.Where(o => o.Status == true);
@@ -62,11 +63,11 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
                 {
                     TotalOutbreaks = g.Count(),
                     ActiveOutbreaks = g.Count(x => x.Status == true),
-                    ResolvedOutbreaks = g.Count(x => x.Status==false)
+                    ResolvedOutbreaks = g.Count(x => x.Status == false)
                 }).FirstOrDefaultAsync();
 
             // Actual Data
-             var data = await query.ToListAsync();
+            var data = await query.ToListAsync();
 
             return new OutbreakAnalyticsReportResponse
             {
@@ -78,9 +79,9 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
                 Data = data
             };
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new HealthNetException("An Error occured while fetching the outbreaks reports "+ex.Message);
+            throw new HealthNetException("An Error occured while fetching the outbreaks reports " + ex.Message);
         }
     }
 
@@ -115,9 +116,9 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
             }
 
             //Filter using Date ranges for DOB
-            if(request.StartDate.HasValue && request.EndDate.HasValue)
+            if (request.StartDate.HasValue && request.EndDate.HasValue)
             {
-                query = query.Where(p => request.StartDate<=p.DOB && p.DOB<=request.EndDate);
+                query = query.Where(p => request.StartDate <= p.DOB && p.DOB <= request.EndDate);
             }
             else if (request.StartDate.HasValue)
             {
@@ -127,10 +128,10 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
             {
                 query = query.Where(p => p.DOB <= request.EndDate);
             }
-            
-            
-            var data = await query.ToListAsync();    
-            
+
+
+            var data = await query.ToListAsync();
+
             return new PatientAnalyticsReportResponse
             {
                 Success = true,
@@ -142,9 +143,9 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
                 Data = data
             };
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new HealthNetException("An Error occured while fetching the Patients records "+ex.Message);
+            throw new HealthNetException("An Error occured while fetching the Patients records " + ex.Message);
         }
     }
 
@@ -186,13 +187,100 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
                 NonCompliantRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.NonComplaint)),
                 PartiallyCompliantRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.PartiallyCompliant)),
                 PendingReviewRecords = data.Count(x => x.Result.ToLower().Equals(ComplianceRecordResultHelper.PendingReview)),
-                CompleteDocPercentage = totalRecords!=0 ? Math.Round((double)complaintRecords/totalRecords*100,2) : 0,
+                CompleteDocPercentage = totalRecords != 0 ? Math.Round((double)complaintRecords / totalRecords * 100, 2) : 0,
                 Data = data
             };
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new HealthNetException("An Error occured while retrieving the Compliance Metric records "+ex.Message);
+            throw new HealthNetException("An Error occured while retrieving the Compliance Metric records " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Get Epidemiology records from the Database
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    ///  The Epidemiology records and metrics from the DB
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<EpidemiologicalAnalyticsReportResponse> EpidemiologyAnalyticsReport(EpidemiologicalAnalyticsReportRequest request)
+    {
+        try
+        {
+            var query = _context.Epidemiologies.Include(e => e.OutbreakNavigation).AsQueryable();
+
+            if (request.EpidemiologyDate.HasValue)
+            {
+                query = query.Where(ep => ep.Date == request.EpidemiologyDate || ep.Date.Date == request.EpidemiologyDate);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.OutbreakDisease))
+            {
+                query = query.Where(ep => ep.OutbreakNavigation.Disease.ToLower().Contains(request.OutbreakDisease.ToLower()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.OutbreakLocation))
+            {
+                query = query.Where(ep => ep.OutbreakNavigation.Location.ToLower().Contains(request.OutbreakLocation));
+            }
+
+            if (request.OutbreakStartDate.HasValue)
+            {
+                query = query.Where(ep => request.OutbreakStartDate <= ep.OutbreakNavigation.StartDate);
+            }
+
+            if (request.OutbreakEndDate.HasValue)
+            {
+                query = query.Where(ep => ep.OutbreakNavigation.EndDate <= request.OutbreakEndDate);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.OutbreakStatus))
+            {
+                if (request.OutbreakStatus.ToLower().Equals("active"))
+                {
+                    query = query.Where(ep => ep.OutbreakNavigation.Status == true);
+                }
+                else if (request.OutbreakStatus.ToLower().Equals("inactive"))
+                {
+                    query = query.Where(ep => ep.OutbreakNavigation.Status == false);
+                }
+            }
+
+            var result = await query.ToListAsync();
+            List<EpidemiologyResponse> epidemiologyData = new List<EpidemiologyResponse>();
+
+            foreach (var item in result)
+            {
+                EpidemiologyResponse epiResponse = new EpidemiologyResponse
+                {
+                    EpiId = item.EpiId,
+                    MetricsJSON = item.MetricsJSON,
+                    EpiDate = item.Date,
+                    Disease = item.OutbreakNavigation.Disease,
+                    Location = item.OutbreakNavigation.Location,
+                    OutbreakStartDate = item.OutbreakNavigation.StartDate,
+                    OutbreakEndDate = item.OutbreakNavigation.EndDate,
+                    Severity = item.OutbreakNavigation.Severity
+                };
+
+                epidemiologyData.Add(epiResponse);
+            }
+
+            return new EpidemiologicalAnalyticsReportResponse
+            {
+                Success = true,
+                TotalEpidemiologies = result.Count,
+                ActiveEpidemiologies = result.Count(e => e.Status == true),
+                ActiveOutbreaks = result.Count(e => e.OutbreakNavigation.Status == true),
+                InActiveOutbreaks = result.Count(e => e.OutbreakNavigation.Status == false),
+                EpidemiologyResponses = epidemiologyData
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException("An Error Occurred while retrieving data from Epidemiology " + ex.Message);
         }
     }
 }

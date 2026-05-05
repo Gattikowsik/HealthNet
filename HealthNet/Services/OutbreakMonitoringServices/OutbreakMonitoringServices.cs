@@ -51,12 +51,21 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                 };
             }
             // Validate the Severity field
+            var allowedSeverities = new[] { "high", "low", "medium" };
             if (string.IsNullOrWhiteSpace(request.Severity))
             {
                 return new CreateOutbreakResponseDto
                 {
                     Success = false,
                     Message = "Severity field Cannot be Empty."
+                };
+            }
+            if (!allowedSeverities.Contains(request.Severity.ToLower()))
+            {
+                return new CreateOutbreakResponseDto
+                {
+                    Success = false,
+                    Message = "Severity field must be one of these values High, Medium, Low."
                 };
             }
             // Validate the Location field
@@ -74,6 +83,16 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                 {
                     Success = false,
                     Message = "Location must be of atleast 3 Characters length."
+                };
+            }
+
+            // Check for Special Chars in Loction
+            if (StringHelper.ContainsSpecialCharacters(request.Location))
+            {
+                return new CreateOutbreakResponseDto
+                {
+                    Success = false,
+                    Message = "Special Characters are not allowed in Location field."
                 };
             }
 
@@ -115,6 +134,12 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                     Message = "Start date must be earlier than the end date."
                 };
             }
+            // If end Date is Less than the present Date then make Status as inactive
+            if (presentDateTime <= request.EndDate)
+            {
+                request.Status = false;
+            }
+
             // Check for Duplicate Outbreak
             if (await _repository.DuplicateOutbreakExitsAsync(request))
             {

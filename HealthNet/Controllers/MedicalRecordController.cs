@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using HealthNet.DTOs.MedicalRecordDto;
 using Microsoft.AspNetCore.Authorization;
+using HealthNet.Utility;
 
 namespace HealthNet.Controllers
 {
-    [Route("api/v1/[controller]/patients")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class MedicalRecordController : ControllerBase
     {
@@ -45,16 +46,20 @@ namespace HealthNet.Controllers
 
         //GET /api/patients/{id}/records
         [HttpGet("{patientId}/records")]
-        [Authorize(Roles = "Doctor,Admin")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetMedicalRecords([FromRoute] int patientId)
         {
+
+            int userId = int.Parse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!
+                );
             try
             {
-                var records = await _service.GetPatientRecordsAsync(patientId);
+                var records = await _service.GetPatientRecordsAsync(patientId, userId);
                 return Ok(records);
             }
             catch (KeyNotFoundException)

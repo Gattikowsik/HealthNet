@@ -93,7 +93,7 @@ public class MedicalRecordService : IMedicalRecordService
             RecordId = saved.RecordId
         };
     }
-    public async Task<Dictionary<DateOnly, List<MedicalRecordGetDto>>> GetPatientRecordsAsync(int patientId)
+    public async Task<Dictionary<DateOnly, List<MedicalRecordGetDto>>> GetPatientRecordsAsync(int patientId,int userId)
     {
 
         bool patientExists = await _context.Patients
@@ -105,7 +105,7 @@ public class MedicalRecordService : IMedicalRecordService
         }
 
         var records = await _repository.GetRecordsByPatientIdAsync(patientId);
-
+        await AddAuditLog(userId, "Read");
         return records
             .OrderByDescending(r => r.Date)
             .GroupBy(r => r.Date)

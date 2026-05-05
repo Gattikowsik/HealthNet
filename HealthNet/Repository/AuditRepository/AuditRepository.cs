@@ -27,7 +27,7 @@ public class AuditRepository : IAuditRepository
             OfficerId = userId,        // from JWT token
             Scope     = request.Scope,
             Findings  = request.Findings,
-            Status    = request.Status,
+            Status    = request.Status.Value,
             Date      = DateTime.UtcNow   // auto set to current date and time
         };
 

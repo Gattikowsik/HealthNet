@@ -2,8 +2,11 @@ using System;
 using HealthNet.Repository.MedicalRepository;
 using Microsoft.EntityFrameworkCore;
 using HealthNet.DTOs.MedicalRecordDto;
+using System.Security.Claims;
 using HealthNetDb.Data;
+using HealthNetDb.Enums;
 using HealthNetDb.Entities;
+
 
 namespace HealthNet.Services.MedicalServices;
 
@@ -32,7 +35,26 @@ public class MedicalRecordService : IMedicalRecordService
             .AnyAsync(p => p.PatientId == patientId);
 
         if (!patientExists)
-            throw new KeyNotFoundException("Patient not found");
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Patient not found"
+            };
+
+        }
+        var lastRecord = await _repository.GetLatestRecordByPatientIdAsync(patientId);
+
+        if (lastRecord != null &&
+            lastRecord.Status == MedicalRecordStatus.Active)
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message =
+                    "A medical record is already active for this patient. Please close the current record before adding a new one."
+            };
+        }
 
         var record = new MedicalRecord
         {
@@ -41,7 +63,7 @@ public class MedicalRecordService : IMedicalRecordService
             Diagnosis = dto.Diagnosis,
             TreatmentPlan = dto.TreatmentPlan,
             Date = dto.Date,
-            Status = dto.Status
+            Status = MedicalRecordStatus.Active
         };
 
         var saved = await _repository.AddAsync(record);
@@ -70,5 +92,57 @@ public class MedicalRecordService : IMedicalRecordService
             Success = true,
             RecordId = saved.RecordId
         };
+    }
+    public async Task<List<KeyValuePair<DateOnly, List<MedicalRecordGetDto>>>> GetPatientRecordsAsync(int patientId, int userId)
+    {
+
+        bool patientExists = await _context.Patients
+              .AnyAsync(p => p.PatientId == patientId);
+
+        if (!patientExists)
+        {
+            throw new KeyNotFoundException("Patient not found");
+        }
+
+        var records = await _repository.GetRecordsByPatientIdAsync(patientId);
+        await AddAuditLog(userId, "Read");
+        return records
+        .OrderByDescending(r => r.Date)
+            .GroupBy(r => r.Date)
+            .Select(g =>
+                new KeyValuePair<DateOnly, List<MedicalRecordGetDto>>(
+                    g.Key,
+                    g.Select(MapFull).ToList()
+                )
+            )
+            .ToList();
+    }
+
+    private static MedicalRecordGetDto MapFull(MedicalRecord record)
+    {
+        return new MedicalRecordGetDto
+        {
+            Date = record.Date,
+            Diagnosis = record.Diagnosis,
+            TreatmentPlan = record.TreatmentPlan,
+        };
+    }
+
+    private async Task AddAuditLog(int userId, string action)
+    {
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == action)
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            ActionId = actionId,
+            Resource = "MedicalRecord",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
     }
 }

@@ -2,8 +2,6 @@ namespace HealthNetDb.Enums;
 
 public enum PatientStatus
 {
-    Registered = 1,
-    UnderTreatment = 2,
-    Recovered = 3,
-    Discharged = 4
+    Active = 1,
+    InActive = 2
 }

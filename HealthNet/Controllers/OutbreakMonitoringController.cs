@@ -104,5 +104,13 @@ namespace HealthNet.Controllers
 
             return Ok(response);
         }
+        // Get ALL Active Outbreaks
+        [HttpGet("active")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetAllActiveOutbreaks()
+        {
+            var response = await _outbreakMonitoringServices.GetAllActiveOutbreaksService();
+            return Ok(response);
+        }
     }
 }

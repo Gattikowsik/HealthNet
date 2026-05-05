@@ -2,8 +2,11 @@ using System;
 using HealthNet.Repository.MedicalRepository;
 using Microsoft.EntityFrameworkCore;
 using HealthNet.DTOs.MedicalRecordDto;
+using System.Security.Claims;
 using HealthNetDb.Data;
+using HealthNetDb.Enums;
 using HealthNetDb.Entities;
+
 
 namespace HealthNet.Services.MedicalServices;
 
@@ -32,7 +35,26 @@ public class MedicalRecordService : IMedicalRecordService
             .AnyAsync(p => p.PatientId == patientId);
 
         if (!patientExists)
-            throw new KeyNotFoundException("Patient not found");
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Patient not found"
+            };
+
+        }
+        var lastRecord = await _repository.GetLatestRecordByPatientIdAsync(patientId);
+
+        if (lastRecord != null &&
+            lastRecord.Status != PatientStatus.InActive)
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message =
+                    "A medical record is already active for this patient. Please close the current record before adding a new one."
+            };
+        }
 
         var record = new MedicalRecord
         {
@@ -70,5 +92,55 @@ public class MedicalRecordService : IMedicalRecordService
             Success = true,
             RecordId = saved.RecordId
         };
+    }
+    public async Task<Dictionary<DateOnly, List<MedicalRecordGetDto>>> GetPatientRecordsAsync(int patientId)
+    {
+
+        bool patientExists = await _context.Patients
+              .AnyAsync(p => p.PatientId == patientId);
+
+        if (!patientExists)
+        {
+            throw new KeyNotFoundException("Patient not found");
+        }
+
+        var records = await _repository.GetRecordsByPatientIdAsync(patientId);
+
+        return records
+            .OrderByDescending(r => r.Date)
+            .GroupBy(r => r.Date)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(MapFull).ToList()
+            );
+    }
+
+    private static MedicalRecordGetDto MapFull(MedicalRecord record)
+    {
+        return new MedicalRecordGetDto
+        {
+            Date = record.Date,
+            Diagnosis = record.Diagnosis,
+            TreatmentPlan = record.TreatmentPlan,
+            Status = record.Status.ToString()
+        };
+    }
+
+    private async Task AddAuditLog(int userId, string action)
+    {
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == action)
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            ActionId = actionId,
+            Resource = "MedicalRecord",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
     }
 }

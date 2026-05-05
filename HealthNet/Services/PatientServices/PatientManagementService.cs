@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using HealthNet.DTOs.Pages;
 using HealthNetDb.Entities;
 using HealthNetDb.Data;
+using HealthNetDb.Enums;
 using Microsoft.EntityFrameworkCore;
 using HealthNet.Repository.PatientRepository;
 
@@ -86,17 +87,18 @@ public class PatientManagementService : IPatientManagementService
             };
         }
 
-        bool patientExists = await _context.Patients.AnyAsync(p =>
-            p.Name == dto.Name &&
-            p.ContactInfo == dto.ContactInfo
-        );
+        bool activePatientExists = await _context.Patients.AnyAsync(p =>
+               p.Name == dto.Name &&
+               p.ContactInfo == dto.ContactInfo &&
+               p.Status == PatientStatus.Active
+           );
 
-        if (patientExists)
+        if (activePatientExists)
         {
             return new RegisterPatientResponseDto
             {
                 Success = false,
-                Message = "A patient with the same name and contact number already exists."
+                Message = "Patient is already active. Please discharge the patient before re-registration."
             };
         }
 
@@ -107,7 +109,7 @@ public class PatientManagementService : IPatientManagementService
             Gender = dto.Gender,
             Address = dto.Address,
             ContactInfo = dto.ContactInfo,
-            Status = dto.Status
+            Status = PatientStatus.Active
         };
 
         var saved = await _patientRepository.AddAsync(patient);

@@ -9,6 +9,6 @@ public interface IOutbreakMonitoringServices
     Task<UpdateOutbreakResponseDto> UpdateOutbreakService(int userId, int outbreakId, UpdateOutbreakRequestDto request);
     Task<GetOutbreakResponseDto?> GetOutbreakByIdService(int outbreakId);
     Task<AddEpidemiologyResponseDto> AddEpidemiologyService(int userId, int outbreakId, AddEpidemiologyRequestDto request);
-
+    Task<List<GetActiveOutbreaksResponseDto>> GetAllActiveOutbreaksService();
 
 }

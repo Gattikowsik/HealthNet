@@ -20,4 +20,6 @@ public interface IOutBreakMonitoringRepository
     Task<UpdateOutbreakResult> UpdateOutbreakAsync(int outbreakId, UpdateOutbreakRequestDto request);
     Task<bool> OutbreakExistsAsync(int outbreakId);
     Task<int> AddEpidemiologyAsync(Epidemiology epidemiology);
+    Task<List<Outbreak>> GetAllActiveOutbreaksAsync();
+
 }

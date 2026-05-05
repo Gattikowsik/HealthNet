@@ -52,5 +52,7 @@ namespace HealthNet.Controllers
                 return StatusCode(500, AuditHelper.GenericError); // 500 — unexpected error
             }
         }
+
+        
     }
 }

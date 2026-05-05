@@ -8,6 +8,7 @@ using HealthNetDb.Data;
 using HealthNetDb.Entities;
 using Microsoft.EntityFrameworkCore;
 namespace HealthNet.Services;
+
 public class SubmitSymptomReportService : ISubmitSymptomReportService
 {
     private readonly ISubmitSymptomReportRepository _repository;
@@ -85,7 +86,7 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         return result;
     }
 
-    public async Task<PagedResponseDto<SymptomReportResponseDto>>GetMineAsync(int userId, int pageNumber, int pageSize)
+    public async Task<PagedResponseDto<SymptomReportResponseDto>> GetMineAsync(int userId, int pageNumber, int pageSize)
     {
         var query = _context.SymptomReports
                         .Where(r => r.CitizenId == userId)
@@ -117,7 +118,6 @@ public class SubmitSymptomReportService : ISubmitSymptomReportService
         await _context.SaveChangesAsync();
         return result;
     }
-
     public async Task<SubmitSymptomReportResponseDto> SubmitAsync(SubmitSymptomReportRequestDto request, int citizenId)
     {
         // Duplicate check (block until CLOSED)

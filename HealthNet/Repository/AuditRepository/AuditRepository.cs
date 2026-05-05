@@ -1,6 +1,7 @@
 using System;
 using HealthNet.DTOs.AuditDTO;
 using HealthNetDb.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthNet.Repository.AuditRepository;
 
@@ -12,7 +13,7 @@ public class AuditRepository : IAuditRepository
     {
         _context = context;
     }
-
+    
     /// <summary>
     /// Creates a new audit record in the database.
     /// </summary>
@@ -25,10 +26,10 @@ public class AuditRepository : IAuditRepository
         var audit = new HealthNetDb.Entities.Audit
         {
             OfficerId = userId,        // from JWT token
-            Scope     = request.Scope,
-            Findings  = request.Findings,
-            Status    = request.Status,
-            Date      = DateTime.UtcNow   // auto set to current date and time
+            Scope = request.Scope,
+            Findings = request.Findings,
+            Status = request.Status.Value,
+            Date = DateTime.UtcNow   // auto set to current date and time
         };
 
         // Save to DB — EF Core generates AuditId after this
@@ -41,4 +42,7 @@ public class AuditRepository : IAuditRepository
             AuditId = audit.AuditId
         };
     }
+
+    
+
 }

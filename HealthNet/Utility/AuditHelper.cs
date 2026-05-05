@@ -20,4 +20,8 @@ public class AuditHelper
     public const string GenericError = "Something went wrong. Please try again.";
     // If the same officer already audited the same scope
     public const string DuplicateAudit = "An audit already exists for this scope by the same officer.";
+    public const string InvalidScope = "Scope must be a meaningful text, not a placeholder or number.";
+    public const string InvalidFindings = "Findings must be a meaningful text, not a placeholder or number.";
+    public const string StatusRequired = "Status is required. Please provide true or false.";
+
 }

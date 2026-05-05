@@ -30,4 +30,5 @@ public class SymptomReport
 
     [Required]
     public SymptomStatus Status { get; set; }
+    public bool IsDeleted { get; set; }  // Soft delete flag
 }

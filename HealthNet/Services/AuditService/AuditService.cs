@@ -46,10 +46,13 @@ public class AuditService : IAuditService
         if (!request.Status.HasValue)
             throw new ArgumentException(AuditHelper.StatusRequired);
 
+
         // ── STEP 6: Check for duplicate ────────────────────────────
+        // Reject if an open audit with the same Scope already exists for this officer
         var isDuplicate = await _context.Audits
             .AnyAsync(a => a.OfficerId == userId
-                        && a.Scope.ToLower() == request.Scope.ToLower());
+                        && a.Scope.ToLower() == request.Scope.ToLower()
+                        && a.Status == true);  // only reject if open record exists
         if (isDuplicate)
             throw new ArgumentException(AuditHelper.DuplicateAudit);
 
@@ -116,9 +119,9 @@ public class AuditService : IAuditService
             // ── STEP 4: Log to AuditLog ────────────────────────────
             var auditLog = new HealthNetDb.Entities.AuditLog
             {
-                UserId    = userId,
-                ActionId  = actionId,       // "Update" action
-                Resource  = "Audit",
+                UserId = userId,
+                ActionId = actionId,       // "Update" action
+                Resource = "Audit",
                 Timestamp = DateTime.UtcNow
             };
             _context.AuditLogs.Add(auditLog);

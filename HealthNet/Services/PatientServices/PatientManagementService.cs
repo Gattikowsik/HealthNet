@@ -136,4 +136,37 @@ public class PatientManagementService : IPatientManagementService
             PatientId = saved.PatientId
         };
     }
+    public async Task<bool> DeactivatePatientAsync(int patientId, int userId)
+    {
+        var patient = await _context.Patients
+            .FirstOrDefaultAsync(p => p.PatientId == patientId);
+
+        if (patient == null)
+            throw new KeyNotFoundException("Patient not found");
+
+        if (patient.Status == PatientStatus.InActive)
+            return false; // already inactive
+
+        patient.Status = PatientStatus.InActive;
+
+        await _context.SaveChangesAsync();
+
+        // ✅ Audit log
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == "Delete")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            ActionId = actionId,
+            Resource = "Patient",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }

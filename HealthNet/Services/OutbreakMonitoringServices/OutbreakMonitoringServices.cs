@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using HealthNet.DTOs.OutbreakMonitoringDTO;
 using HealthNet.Repository.OutbreakMonitoringRepository;
 using HealthNet.Utility;
@@ -240,7 +241,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
         //Auto-close if EndDate is in the past
         if (request.EndDate.Date < DateTime.UtcNow.Date)
         {
-            request.Status = false; 
+            request.Status = false;
         }
         var result = await _repository.UpdateOutbreakAsync(outbreakId, request);
         if (result == UpdateOutbreakResult.NotFound)
@@ -314,6 +315,13 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
         };
 
         int epiId = await _repository.AddEpidemiologyAsync(epi);
+
+        // ADD ONLY THIS BLOCK
+        if (OutbreakAlertUtility.IsThresholdBreached(
+        request.MetricsJSON, out double rt))
+        {
+            Console.WriteLine($"🚨 OutbreakAlertRaised | OutbreakId={outbreakId} | Rt={rt} | Time={DateTime.UtcNow}");
+        }
 
         await _repository.AddAuditLogAsync(userId, "Create", "Epidemiology");
 

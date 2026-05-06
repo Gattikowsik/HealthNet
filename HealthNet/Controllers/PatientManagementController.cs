@@ -52,5 +52,38 @@ namespace HealthNet.Controllers
             }
             return Created(string.Empty, new { patientId = response.PatientId });
         }
+        [HttpPatch("{patientId}/deactivate")]
+        [Authorize(Roles = $"{Roles.Admin},{Roles.Doctor}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeactivatePatient(int patientId)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim);
+
+            try
+            {
+                bool result = await _patientService.DeactivatePatientAsync(patientId, userId);
+
+                if (!result)
+                {
+                    return BadRequest("Patient is already inactive.");
+                }
+
+                return Ok("Patient deactivated successfully.");
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Patient not found.");
+            }
+        }
     }
 }

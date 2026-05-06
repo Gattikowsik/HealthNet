@@ -10,4 +10,5 @@ public interface IPatientManagementService
 {
      Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto, int userId);
      Task<RegisterPatientResponseDto> RegisterPatientAsync(RegisterPatientRequestDto dto, int userId);
+     Task<bool> DeactivatePatientAsync(int patientId, int userId);
 }

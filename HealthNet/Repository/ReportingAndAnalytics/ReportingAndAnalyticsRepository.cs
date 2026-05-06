@@ -115,6 +115,18 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
                 query = query.Where(p => p.Gender.ToLower().Equals(request.Gender.ToLower()));
             }
 
+            // Filter using Status
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                if (request.Status.ToLower().Equals("active"))
+                {
+                    query = query.Where(p => p.Status == PatientStatus.Active);
+                }
+                else if (request.Status.ToLower().Equals("inactive"))
+                {
+                    query = query.Where(p => p.Status == PatientStatus.InActive);
+                }
+            }
             //Filter using Date ranges for DOB
             if (request.StartDate.HasValue && request.EndDate.HasValue)
             {
@@ -136,10 +148,8 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
             {
                 Success = true,
                 TotalPatients = data.Count,
-                RegisteredPatients = data.Count(x => x.Status == PatientStatus.Registered),
-                UnderTreatmentPatients = data.Count(x => x.Status == PatientStatus.UnderTreatment),
-                RecoveredPatients = data.Count(x => x.Status == PatientStatus.Recovered),
-                DischargedPatients = data.Count(x => x.Status == PatientStatus.Discharged),
+                ActivePatients = data.Count(x => x.Status == PatientStatus.Active),
+                InActivePatients = data.Count(x => x.Status == PatientStatus.InActive),
                 Data = data
             };
         }

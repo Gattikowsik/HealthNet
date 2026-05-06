@@ -87,20 +87,20 @@ public class ReportingAndAnalyticsService : IReportingAndAnalyticsService
         try
         {
             // Validate the Age
-            if (request.MinAge.HasValue && (request.MinAge <= 0 || request.MinAge > 150))
+            if (request.MinAge.HasValue && (request.MinAge <= 0 || request.MinAge > 200))
             {
                 return new PatientAnalyticsReportResponse
                 {
                     Success = false,
-                    Message = "Minimum Age Cannot be less than 1 and greater than 150."
+                    Message = "Minimum Age Cannot be less than 1 and greater than 200."
                 };
             }
-            if (request.MaxAge.HasValue && (request.MaxAge > 150 || request.MaxAge <= 0))
+            if (request.MaxAge.HasValue && (request.MaxAge > 200 || request.MaxAge <= 0))
             {
                 return new PatientAnalyticsReportResponse
                 {
                     Success = false,
-                    Message = "Maximum Age Cannot be greater than 150 and less than 1."
+                    Message = "Maximum Age Cannot be greater than 200 and less than 1."
                 };
             }
             if (request.MinAge.HasValue && request.MaxAge.HasValue && request.MaxAge < request.MinAge)
@@ -123,6 +123,18 @@ public class ReportingAndAnalyticsService : IReportingAndAnalyticsService
                 {
                     Success = false,
                     Message = "Gender Must be one of these Male, Female, Other."
+                };
+            }
+
+            // Validate Status Field
+            if(!string.IsNullOrWhiteSpace(request.Status) 
+                && !request.Status.ToLower().Equals("active")
+                && !request.Status.ToLower().Equals("inactive"))
+            {
+                return new PatientAnalyticsReportResponse
+                {
+                    Success = false,
+                    Message = "Status must be either active or inactive."
                 };
             }
 
@@ -152,7 +164,6 @@ public class ReportingAndAnalyticsService : IReportingAndAnalyticsService
                     Message = "End Date Cannot be in Future."
                 };
             }
-
 
             return await _repository.PatientAnalyticsReport(request);
         }

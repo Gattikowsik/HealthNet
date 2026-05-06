@@ -297,12 +297,81 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
         //  Outbreak existence check
-        if (!await _repository.OutbreakExistsAsync(outbreakId))
+
+        var outbreak = await _repository.GetOutbreakByIdAsync(outbreakId);
+
+        if (outbreak == null)
         {
             return new AddEpidemiologyResponseDto
             {
                 Success = false,
                 Message = "Outbreak not found"
+            };
+        }
+        //  Metric date must not be before outbreak start date
+        if (request.Date.Date < outbreak.StartDate.Date)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be before outbreak start date"
+            };
+        }
+        // If outbreak is closed, metric date must not be after outbreak end date
+        if (!outbreak.Status && request.Date.Date > outbreak.EndDate.Date)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be after outbreak end date for a closed outbreak"
+            };
+        }
+        // Parse MetricsJSON
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(request.MetricsJSON);
+        }
+        catch
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "MetricsJSON must be valid JSON"
+            };
+        }
+
+        var root = doc.RootElement;
+        //  Enforce required metrics only
+        if (!root.TryGetProperty("cases", out var casesProp) ||
+            !root.TryGetProperty("recoveries", out var recProp) ||
+            !root.TryGetProperty("RtNow", out var rtProp))
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "MetricsJSON must contain cases, recoveries, and RtNow"
+            };
+        }
+        int cases = casesProp.GetInt32();
+        int recoveries = recProp.GetInt32();
+        double rtNow = rtProp.GetDouble();
+        // Metrics value validation
+        if (cases < 0 || recoveries < 0 || rtNow < 0)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Metric values cannot be negative"
+            };
+        }
+
+        if (recoveries > cases)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Recoveries cannot be greater than cases"
             };
         }
         // Create Epidemiology record
@@ -316,11 +385,10 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
 
         int epiId = await _repository.AddEpidemiologyAsync(epi);
 
-        // ADD ONLY THIS BLOCK
-        if (OutbreakAlertUtility.IsThresholdBreached(
-        request.MetricsJSON, out double rt))
+        // ADD TRIGGER
+        if (OutbreakAlertUtility.IsThresholdBreached(rtNow))
         {
-            Console.WriteLine($"🚨 OutbreakAlertRaised | OutbreakId={outbreakId} | Rt={rt} | Time={DateTime.UtcNow}");
+            Console.WriteLine($"🚨 OutbreakAlertRaised | OutbreakId={outbreakId} | Rt={rtNow} | Time={DateTime.UtcNow}");
         }
 
         await _repository.AddAuditLogAsync(userId, "Create", "Epidemiology");

@@ -8,4 +8,5 @@ public interface IReportingAndAnalyticsService
     Task<PatientAnalyticsReportResponse> PatientAnalyticsReportService(PatientAnalyticsReportRequest request);
     Task<ComplianceMetricsReportResponse> ComplianceMetricsReportService(ComplianceMetricsReportRequest request);
     Task<EpidemiologicalAnalyticsReportResponse> EpidemiologicalReportService(EpidemiologicalAnalyticsReportRequest request);
+    Task<CaseAnalyticsReportResponse> CaseAnalyticsReportService(CaseAnalyticsReportRequest request);
 }

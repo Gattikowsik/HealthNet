@@ -97,5 +97,24 @@ namespace HealthNet.Controllers
 
             return Ok(response);
         }
+
+        // <summary>
+        // GetCaseReportRecords — Get Case Reports Records for given Query Filters
+        // </summary>
+        // <param name="request"> CaseAnalyticsReportRequest DTO for data transfer from client </param>
+        [HttpGet("cases")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetCaseReportRecords([FromQuery] CaseAnalyticsReportRequest request)
+        {
+            var response = await _reportingAndAnalyticsService.CaseAnalyticsReportService(request);
+            if (!response.Success)
+            {
+                return BadRequest(response.Message);
+            }
+
+            return Ok(response);
+        }
     }
 }

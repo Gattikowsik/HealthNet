@@ -31,6 +31,28 @@ public class MedicalRecordService : IMedicalRecordService
                 Message = "Date cannot be in the future."
             };
         }
+
+        // Diagnosis validation (must contain letters)
+
+        if (!dto.Diagnosis.Any(char.IsLetter))
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Diagnosis must contain meaningful text (not only numbers)."
+            };
+        }
+
+        // TreatmentPlan validation (must contain letters)
+        if (!dto.TreatmentPlan.Any(char.IsLetter))
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Treatment plan must contain meaningful text (not only numbers)."
+            };
+        }
+
         var patient = await _context.Patients
              .FirstOrDefaultAsync(p => p.PatientId == patientId);
 
@@ -164,7 +186,7 @@ public class MedicalRecordService : IMedicalRecordService
             throw new KeyNotFoundException("Medical record not found");
 
         if (record.Status == MedicalRecordStatus.Inactive)
-            return false; 
+            return false;
 
         record.Status = MedicalRecordStatus.Inactive;
 

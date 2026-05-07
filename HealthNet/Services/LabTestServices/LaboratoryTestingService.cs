@@ -196,4 +196,125 @@ public class LaboratoryTestingService : ILaboratoryTestingService
             throw new HealthNetException($"An error occurred while fetching lab tests. {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Updates an existing lab test. 
+    /// Doctors can update both Type and TechnicianId, while Lab Technicians can only update Type. 
+    /// </summary>
+    /// <param name="testId"></param>
+    /// <param name="request"></param>
+    /// <param name="userId"></param>
+    /// <param name="userRole"></param>
+    /// <returns></returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<LaboratoryTestingResponse> UpdateLabTestAsync(int testId, LaboratoryTestingUpdateRequest request, int userId, string userRole)
+    {
+        try
+        {
+            // Validate at least one field is provided
+            if (request.Type == null && request.TechnicianId == null)
+            {
+                throw new HealthNetException(LabTestHelper.NoFieldsToUpdateMessage);
+            }
+
+            // Validate TestId exists
+            var labTest = await _laboratoryTestingRepository.GetLabTestByIdAsync(testId);
+            if (labTest == null)
+            {
+                throw new HealthNetException(LabTestHelper.TestNotFoundMessage);
+            }
+
+            // Validate LabTest is Pending
+            if (labTest.Status == true)
+            {
+                throw new HealthNetException(LabTestHelper.TestAlreadyCompletedMessage);
+            }
+
+            // Validate ownership
+            if (userRole == Roles.LabTechnician && labTest.TechnicianId != userId)
+            {
+                throw new UnauthorizedAccessException(LabTestHelper.UnauthorizedUpdateMessage);
+            }
+
+            // Store original values BEFORE updating
+            var originalType         = labTest.Type;
+            var originalTechnicianId = labTest.TechnicianId;
+
+            // Validate and update Type if provided
+            if (request.Type != null)
+            {
+                if (!LabTestHelper.IsValidType(request.Type))
+                {
+                    throw new HealthNetException(LabTestHelper.InvalidTypeMessage);
+                }
+                labTest.Type = request.Type;
+            }
+
+            // Validate and update TechnicianId if provided and different
+            if (request.TechnicianId.HasValue && request.TechnicianId.Value != labTest.TechnicianId)
+            {
+                // Only Doctor can reassign technician
+                if (userRole != Roles.Doctor)
+                {
+                    throw new UnauthorizedAccessException(LabTestHelper.OnlyDoctorCanReassignMessage);
+                }
+                bool techExists = await _laboratoryTestingRepository.TechnicianExistsAsync(request.TechnicianId.Value);
+                if (!techExists)
+                {
+                    throw new HealthNetException(LabTestHelper.InvalidTechnicianMessage);
+                }
+                labTest.TechnicianId = request.TechnicianId.Value;
+            }
+
+            // Check if anything actually changed
+            if (labTest.Type == originalType && labTest.TechnicianId == originalTechnicianId)
+            {
+                throw new HealthNetException(LabTestHelper.NoChangesDetectedMessage);
+            }
+
+            // Save updated LabTest
+            var updated = await _laboratoryTestingRepository.UpdateLabTestAsync(labTest);
+
+            // Fetch ActionId for "Update"
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Update")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // Save AuditLog
+            var auditLog = new AuditLog
+            {
+                UserId    = userId,
+                ActionId  = actionId,
+                Resource  = "Lab Test",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+
+            //Map entity → response DTO
+            return new LaboratoryTestingResponse
+            {
+                TestId       = updated.TestId,
+                PatientId    = updated.PatientId,
+                Type         = updated.Type,
+                Date         = updated.Date,
+                TechnicianId = updated.TechnicianId,
+                Status       = updated.Status
+            };
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw;
+        }
+        catch (HealthNetException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while updating lab test. {ex.Message}");
+        }
+    }
 }

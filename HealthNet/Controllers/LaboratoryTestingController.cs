@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using HealthNetDb.Entities;
+using HealthNet.Utility;
 
 namespace HealthNet.Controllers
 {
@@ -96,6 +97,57 @@ namespace HealthNet.Controllers
                     count = result.Count(),
                     data = result
                 });
+            }
+            catch (HealthNetException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// UpdateLabTestAsync — updates an existing lab test
+        /// Doctor can update Type and TechnicianId
+        /// Assigned Lab Tech can update Type only
+        /// </summary>
+        [HttpPut("{testId}")]
+        [Authorize(Roles = $"{Roles.Doctor},{Roles.LabTechnician}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> UpdateLabTestAsync(int testId, [FromBody] LaboratoryTestingUpdateRequest request)
+        {
+            try
+            {
+                // Validate testId
+                if (testId <= 0)
+                {
+                    return BadRequest(new { success = false, message = LabTestHelper.InvalidTestIdMessage });
+                }
+
+                // Extract userId and role from JWT
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId      = int.Parse(userIdClaim!);
+                var userRole = User.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value!;
+
+                var result = await _laboratoryTestingService.UpdateLabTestAsync(testId, request, userId, userRole);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Lab test updated successfully.",
+                    data    = result
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { success = false, message = ex.Message });
             }
             catch (HealthNetException ex)
             {

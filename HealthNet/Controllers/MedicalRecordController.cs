@@ -20,7 +20,7 @@ namespace HealthNet.Controllers
         }
         // ✅ POST /api/patients/{id}/records
         [HttpPost("{patientId}/records")]
-        [Authorize(Roles = "Doctor")]
+        [Authorize(Roles = $"{Roles.Doctor}")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -65,6 +65,39 @@ namespace HealthNet.Controllers
             catch (KeyNotFoundException)
             {
                 return NotFound("Patient not found");
+            }
+        }
+        [HttpPatch("{recordId}/close")]
+        [Authorize(Roles = $"{Roles.Doctor}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CloseMedicalRecord(int recordId)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim);
+
+            try
+            {
+                bool result = await _service.CloseMedicalRecordAsync(recordId, userId);
+
+                if (!result)
+                {
+                    return BadRequest("Medical record is already closed.");
+                }
+
+                return Ok("Medical record closed successfully.");
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Medical record not found.");
             }
         }
     }

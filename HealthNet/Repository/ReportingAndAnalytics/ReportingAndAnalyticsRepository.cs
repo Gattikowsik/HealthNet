@@ -293,4 +293,75 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
             throw new HealthNetException("An Error Occurred while retrieving data from Epidemiology " + ex.Message);
         }
     }
+
+    /// <summary>
+    /// Get Case Report records from the Database
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    ///  The Case report records and metrics from the DB
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<CaseAnalyticsReportResponse> CaseAnalyticsReport(CaseAnalyticsReportRequest request)
+    {
+        try
+        {
+            var query = _context.Casess.Include(c => c.Citizen).Include(c => c.Doctor).AsQueryable();
+
+            if (request.FromDate.HasValue)
+            {
+                query = query.Where(c => request.FromDate <= c.Date);
+            }
+            if (request.ToDate.HasValue)
+            {
+                query = query.Where(c => c.Date <= request.ToDate);
+            }
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                if (request.Status.ToLower().Equals("active"))
+                {
+                    query = query.Where(c => c.Status == true);
+                }
+                else if (request.Status.ToLower().Equals("inactive"))
+                {
+                    query = query.Where(c => c.Status == false);
+                }
+            }
+
+            var result = await query.ToListAsync();
+            List<CaseResponse> data = new List<CaseResponse>();
+
+            foreach(var item in result)
+            {
+                CaseResponse caseResponse = new CaseResponse()
+                {
+                    CaseId = item.CaseId,
+                    CitizenName = item.Citizen?.Name,
+                    DoctorName = item.Doctor?.Name,
+                    Diagnosis = item.Diagnosis,
+                    RegisteredDate = item.Date,
+                    Status = (item.Status==true)? "Active":"InActive"
+                };
+                data.Add(caseResponse);
+
+            }
+
+            int totalCases = result.Count;
+            int activeCases = result.Count(c => c.Status == true);
+            int inactiveCases = result.Count(c => c.Status == false);
+            return new CaseAnalyticsReportResponse
+            {
+                Success = true,
+                TotalCases = totalCases,
+                Activecases = activeCases,
+                InActiveCases = inactiveCases,
+                ResolvedCasesPercentage = (totalCases!=0) ? Math.Round((double)inactiveCases/totalCases * 100,2) : 0,
+                Data = data
+            };
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException("An Error Occurred while Retrieving Case Reports "+ex.Message);
+        }
+    }
 }

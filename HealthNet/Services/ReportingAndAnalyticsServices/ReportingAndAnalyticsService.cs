@@ -297,4 +297,64 @@ public class ReportingAndAnalyticsService : IReportingAndAnalyticsService
             throw new NotImplementedException("An Error Occurred while retrieving the data from Repository " + ex.Message);
         }
     }
+
+    // Get Case Report Records and Metrics Service
+    /// <summary>
+    /// The request will be validated and sent to the repository.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    /// DTO which consist of Message,and Case Report Records else Error Message
+    /// </returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<CaseAnalyticsReportResponse> CaseAnalyticsReportService(CaseAnalyticsReportRequest request)
+    {
+        try
+        {
+            // Validate Date Field
+            var presentDate = DateTime.UtcNow;
+            if (presentDate < request.FromDate)
+            {
+                return new CaseAnalyticsReportResponse
+                {
+                    Success = false,
+                    Message = "Start Date Cannot be in Future."
+                };
+            }
+            if(presentDate < request.ToDate)
+            {
+                return new CaseAnalyticsReportResponse
+                {
+                    Success = false,
+                    Message = "End Date Cannot be in Future."
+                };
+            }
+            if(request.ToDate < request.FromDate)
+            {
+                return new CaseAnalyticsReportResponse
+                {
+                    Success = false,
+                    Message = "End Date Cannot be earlier than Start Date."
+                };
+            }
+
+            // validate Status Field
+            if(!string.IsNullOrWhiteSpace(request.Status)
+                && !request.Status.ToLower().Equals("active")
+                && !request.Status.ToLower().Equals("inactive"))
+            {
+                return new CaseAnalyticsReportResponse
+                {
+                    Success = false,
+                    Message = "Status must be either active or inactive"
+                };
+            }
+
+            return await _repository.CaseAnalyticsReport(request);
+        }
+        catch(Exception ex)
+        {
+            throw new HealthNetException("An Error Occured while retrieving data from Case repository "+ex.Message);
+        }
+    }
 }

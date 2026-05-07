@@ -31,10 +31,10 @@ public class MedicalRecordService : IMedicalRecordService
                 Message = "Date cannot be in the future."
             };
         }
-        bool patientExists = await _context.Patients
-            .AnyAsync(p => p.PatientId == patientId);
+        var patient = await _context.Patients
+             .FirstOrDefaultAsync(p => p.PatientId == patientId);
 
-        if (!patientExists)
+        if (patient == null)
         {
             return new MedicalRecordResponseDto
             {
@@ -43,6 +43,16 @@ public class MedicalRecordService : IMedicalRecordService
             };
 
         }
+
+        if (patient.Status != PatientStatus.Active)
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Cannot add medical record for an inactive patient."
+            };
+        }
+
         var lastRecord = await _repository.GetLatestRecordByPatientIdAsync(patientId);
 
         if (lastRecord != null &&
@@ -144,5 +154,37 @@ public class MedicalRecordService : IMedicalRecordService
         });
 
         await _context.SaveChangesAsync();
+    }
+    public async Task<bool> CloseMedicalRecordAsync(int recordId, int userId)
+    {
+        var record = await _context.MedicalRecords
+            .FirstOrDefaultAsync(r => r.RecordId == recordId);
+
+        if (record == null)
+            throw new KeyNotFoundException("Medical record not found");
+
+        if (record.Status == MedicalRecordStatus.Inactive)
+            return false; 
+
+        record.Status = MedicalRecordStatus.Inactive;
+
+        await _context.SaveChangesAsync();
+
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == "Delete")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            ActionId = actionId,
+            Resource = "MedicalRecord",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }

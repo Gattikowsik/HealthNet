@@ -6,7 +6,6 @@ namespace HealthNet.Services.MedicalServices;
 public interface IMedicalRecordService
 {
     Task<MedicalRecordResponseDto> AddMedicalRecordAsync(int PatientId, int DoctorId, MedicalRecordRequestDto dto);
-
-
-    Task<List<KeyValuePair<DateOnly, List<MedicalRecordGetDto>>>>GetPatientRecordsAsync(int patientId, int userId);
+    Task<List<KeyValuePair<DateOnly, List<MedicalRecordGetDto>>>> GetPatientRecordsAsync(int patientId, int userId);
+    Task<bool> CloseMedicalRecordAsync(int recordId, int use);
 }

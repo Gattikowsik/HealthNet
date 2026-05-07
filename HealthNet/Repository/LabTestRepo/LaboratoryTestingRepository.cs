@@ -123,4 +123,43 @@ public class LaboratoryTestingRepository : ILaboratoryTestingRepository
             throw new HealthNetException($"An error occurred while fetching lab tests. {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Fetches a single lab test by its ID. Returns null if not found.
+    /// </summary>
+    /// <param name="testId"></param>
+    /// <returns></returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<LabTest?> GetLabTestByIdAsync(int testId)
+    {
+        try
+        {
+            return await _context.LabTests
+                .FirstOrDefaultAsync(lt => lt.TestId == testId);
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while fetching lab test. {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing lab test in the database.
+    /// </summary>
+    /// <param name="labTest"></param>
+    /// <returns></returns>
+    /// <exception cref="HealthNetException"></exception>
+    public async Task<LabTest> UpdateLabTestAsync(LabTest labTest)
+    {
+        try
+        {
+            _context.LabTests.Update(labTest);
+            await _context.SaveChangesAsync();
+            return labTest;
+        }
+        catch (Exception ex)
+        {
+            throw new HealthNetException($"An error occurred while updating lab test. {ex.Message}");
+        }
+    }
 }

@@ -16,6 +16,14 @@ public static class LabTestHelper
     public static string InvalidTypeMessage => $"Invalid test type. Must be one of: {string.Join(", ", GetValidTypes())}.";
     public static string InvalidStatusMessage => $"Invalid status. Must be one of: {string.Join(", ", ValidStatuses)}.";
     public static string FutureDateMessage => "Date filter cannot be a future date.";
+    public static string TestNotFoundMessage          => "Lab test not found.";
+    public static string TestAlreadyCompletedMessage  => "Lab test is already completed. Cannot modify a completed test.";
+    public static string UnauthorizedUpdateMessage    => "You are not authorized to modify this lab test.";
+    public static string NoFieldsToUpdateMessage      => "No fields provided to update.";
+    public static string InvalidTechnicianMessage     => "Provided TechnicianId is not a valid Lab Technician.";
+    public static string NoChangesDetectedMessage     => "No changes detected. Please provide different values to update.";
+    public static string OnlyDoctorCanReassignMessage => "Only Doctor can reassign the technician.";
+    public static string InvalidTestIdMessage         => "TestId must be greater than 0.";
 
     // Validates if the provided type is one of the allowed lab test types
     public static bool IsValidType(string type)

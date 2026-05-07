@@ -10,4 +10,6 @@ public interface ILaboratoryTestingRepository
     Task<bool> TechnicianExistsAsync(int technicianId);
     Task<bool> DuplicateTestExistsAsync(int patientId, string type);
     Task<IEnumerable<LabTest>> GetLabTestsAsync(LaboratoryTestingFilterRequest filter, bool? statusBool);
+    Task<LabTest?> GetLabTestByIdAsync(int testId);
+    Task<LabTest> UpdateLabTestAsync(LabTest labTest);
 }

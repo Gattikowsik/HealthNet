@@ -100,7 +100,15 @@ builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
-
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowAngular", policy =>
+	{
+		policy.WithOrigins("http://localhost:4200")
+			  .AllowAnyHeader()
+			  .AllowAnyMethod();
+	});
+});
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -112,6 +120,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();
+app.UseCors("AllowAngular");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

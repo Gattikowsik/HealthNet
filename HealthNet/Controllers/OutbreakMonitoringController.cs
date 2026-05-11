@@ -104,7 +104,40 @@ namespace HealthNet.Controllers
 
             return Ok(response);
         }
-        // Get ALL Active Outbreaks
+        // Get Epidemiology by ID
+        [HttpGet("epidemiology/{epiId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetEpidemiologyById(int epiId)
+        {
+            var response =
+                await _outbreakMonitoringServices.GetEpidemiologyByIdService(epiId);
+
+            if (response == null)
+                return NotFound("Epidemiology record not found");
+
+            return Ok(response);
+        }
+
+        //Update Epidemiology
+        [HttpPatch("epidemiology/{epiId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateEpidemiologyAsync(int epiId,[FromBody] UpdateEpidemiologyRequestDto request)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var response = await _outbreakMonitoringServices
+                .UpdateEpidemiologyService(userId, epiId, request);
+
+            if (!response.Success)
+                return BadRequest(response.Message);
+
+            return Ok(response);
+        }
+        //Get ALL Active Outbreaks
         [HttpGet("active")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetAllActiveOutbreaks()
@@ -112,5 +145,54 @@ namespace HealthNet.Controllers
             var response = await _outbreakMonitoringServices.GetAllActiveOutbreaksService();
             return Ok(response);
         }
+
+        //Delete an outbreak
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteOutbreakAsync(int id)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var response = await _outbreakMonitoringServices
+                .DeleteOutbreakService(userId, id);
+
+            if (!response.Success)
+                return NotFound(response.Message);
+
+            return Ok(response);
+        }
+
+        //Delete an Epidemiology
+        [HttpDelete("epidemiology/{epiId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteEpidemiologyAsync(int epiId)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var response = await _outbreakMonitoringServices
+                .DeleteEpidemiologyService(userId, epiId);
+
+            if (!response.Success)
+                return NotFound(response.Message);
+
+            return Ok(response);
+        }
+
+
+        //GET ALL EPIDEMIOLOGY RECORDS
+        [HttpGet("epidemiology")]
+        public async Task<IActionResult> GetAllEpidemiology()
+        {
+            var response =
+                await _outbreakMonitoringServices.GetAllEpidemiologyService();
+
+            return Ok(response);
+        }
     }
 }
+
+

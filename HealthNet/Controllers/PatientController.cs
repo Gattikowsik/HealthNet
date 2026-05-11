@@ -12,11 +12,11 @@ namespace HealthNet.Controllers
     [Route("api/v1/[controller]")]
     [ApiController]
     [Authorize]
-    public class PatientManagementController : ControllerBase
+    public class PatientController : ControllerBase
     {
         private readonly IPatientManagementService _patientService;
 
-        public PatientManagementController(IPatientManagementService patientService)
+        public PatientController(IPatientManagementService patientService)
         {
             _patientService = patientService;
         }
@@ -52,6 +52,7 @@ namespace HealthNet.Controllers
             }
             return Created(string.Empty, new { patientId = response.PatientId });
         }
+
         [HttpPatch("{patientId}/deactivate")]
         [Authorize(Roles = $"{Roles.Admin},{Roles.Doctor}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -79,6 +80,55 @@ namespace HealthNet.Controllers
                 }
 
                 return Ok("Patient deactivated successfully.");
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Patient not found.");
+            }
+        }
+
+        [HttpGet("{patientId}")]
+        [ProducesResponseType(typeof(Patient), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetPatientById(int patientId)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized();
+
+            int userId = int.Parse(userIdClaim);
+
+            var patient = await _patientService.GetPatientByIdAsync(patientId, userId);
+
+            if (patient == null)
+                return NotFound("Patient not found.");
+
+            return Ok(patient);
+        }
+
+        [HttpPut("{patientId}")]
+        [Authorize(Roles = $"{Roles.Admin},{Roles.Doctor}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdatePatient(int patientId, [FromBody] UpdatePatientDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim);
+
+            try
+            {
+                var response = await _patientService.UpdatePatientAsync(patientId, dto, userId);
+
+                if (!response.Success)
+                    return BadRequest(response.Message);
+
+                return Ok("Patient updated successfully.");
             }
             catch (KeyNotFoundException)
             {

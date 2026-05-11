@@ -226,25 +226,32 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserResponse> GetUserByIdAsync(int id){
-    var user = await _repository.GetUserByIdAsync(id);
-
-    if (user == null)
-        throw new HealthNetException("User not found");
-
-    if (!user.Status)
-        throw new HealthNetException("User is inactive");
-
-    return new UserResponse
+    public async Task<UserResponse> GetUserByIdAsync(int id)
     {
-        UserId = user.UserId,
-        Name = user.Name,
-        Email = user.Email,
-        Phone = user.Phone,
-        Status = user.Status,
-        RoleName = user.RoleNavigation!.RoleName
-    };
-}
+        var user = await _repository.GetUserByIdAsync(id);
+
+        if (user == null)
+            throw new HealthNetException("User not found");
+
+        if (!user.Status)
+            throw new HealthNetException("User is inactive");
+
+
+        int actionId = await _repository.GetActionIdAsync("Read");
+        var roleName = user.RoleNavigation?.RoleName ?? "Unknown";
+
+        await _repository.InsertIntoAuditLogAsync(actionId, user.UserId, roleName);
+
+        return new UserResponse
+        {
+            UserId = user.UserId,
+            Name = user.Name,
+            Email = user.Email,
+            Phone = user.Phone,
+            Status = user.Status,
+            RoleName = user.RoleNavigation!.RoleName
+        };
+    }
 
 
     // Update User Service
@@ -280,6 +287,11 @@ public class UserService : IUserService
 
         await _repository.UpdateUserAsync(user);
 
+
+        int actionId = await _repository.GetActionIdAsync("Update");
+        var roleName = role.RoleName;
+
+        await _repository.InsertIntoAuditLogAsync(actionId, user.UserId, roleName);
 
         return new UserResponse
         {
@@ -323,7 +335,7 @@ public class UserService : IUserService
 
         Users u = await _repository.UpdateUserStatusAsync(id);
         int actionId = await _repository.GetActionIdAsync("Delete");
-        Console.WriteLine("User Details : "+u);
+        Console.WriteLine("User Details : " + u);
         var roleName = user.RoleNavigation?.RoleName ?? "Unknown";
         AuditLog auditLog = await _repository.InsertIntoAuditLogAsync(actionId, id, roleName);
         return new UserDeleteResponseDto

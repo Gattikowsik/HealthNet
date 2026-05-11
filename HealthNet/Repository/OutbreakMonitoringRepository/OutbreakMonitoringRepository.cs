@@ -177,7 +177,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
         if (outbreak == null)
             return false;
 
-        // ✅ SOFT DELETE
+        // SOFT DELETE
         outbreak.IsDeleted = true;
         outbreak.Status = false; // close outbreak
 
@@ -199,7 +199,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
             return false;
 
         epi.IsDeleted = true;   // soft delete
-        epi.Status = false;     // optional but recommended
+        epi.Status = false;
 
         await _context.SaveChangesAsync();
         return true;

@@ -375,7 +375,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ DUPLICATE CHECK
+        //  DUPLICATE CHECK
         // Blocks ONLY if OutbreakId + Date + MetricsJSON are the same
         bool duplicateExists = await _repository.EpidemiologyDuplicateExistsAsync(
                 outbreakId,request.Date);
@@ -431,7 +431,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
 
         await _repository.DeleteOutbreakAsync(outbreakId);
 
-        // ✅ Audit log
+        //Audit log
         await _repository.AddAuditLogAsync(userId, "Delete", "Outbreak");
 
         return new DeleteResponseDto
@@ -477,9 +477,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             Status = e.Status
         }).ToList();
     }
-
-
-
+        //get all active outbreaks
     public async Task<List<GetActiveOutbreaksResponseDto>> GetAllActiveOutbreaksService()
     {
         var outbreaks = await _repository.GetAllActiveOutbreaksAsync();
@@ -498,7 +496,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
 
     public async Task<UpdateEpidemiologyResponseDto> UpdateEpidemiologyService(int userId,int epiId, UpdateEpidemiologyRequestDto request)
     {
-        // ✅ Fetch existing epidemiology
+        //  Fetch existing epidemiology
         var existingEpi = await _repository.GetEpidemiologyByIdAsync(epiId);
 
         if (existingEpi == null)
@@ -510,7 +508,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ Fetch related outbreak
+        //  Fetch related outbreak
         var outbreak = await _repository.GetOutbreakByIdAsync(existingEpi.OutbreakId);
         if (outbreak == null)
         {
@@ -521,7 +519,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ 1. Date must NOT be in future
+        //  1. Date must NOT be in future
         if (request.Date.Date > DateTime.UtcNow.Date)
         {
             return new UpdateEpidemiologyResponseDto
@@ -531,7 +529,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ 2. Date must NOT be before outbreak start date
+        //  2. Date must NOT be before outbreak start date
         if (request.Date.Date < outbreak.StartDate.Date)
         {
             return new UpdateEpidemiologyResponseDto
@@ -541,7 +539,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ 3. If outbreak is closed → date must be ≤ end date
+        //  3. If outbreak is closed → date must be ≤ end date
         if (!outbreak.Status && request.Date.Date > outbreak.EndDate.Date)
         {
             return new UpdateEpidemiologyResponseDto
@@ -551,7 +549,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ Validate Metrics JSON
+        //  Validate Metrics JSON
         try
         {
             JsonDocument.Parse(request.MetricsJSON);
@@ -565,7 +563,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ Perform update
+        // Perform update
         bool updated = await _repository.UpdateEpidemiologyAsync(epiId, request);
 
         if (!updated)
@@ -577,7 +575,7 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             };
         }
 
-        // ✅ Audit log
+        // Audit log
         await _repository.AddAuditLogAsync(userId, "Update", "Epidemiology");
 
         return new UpdateEpidemiologyResponseDto

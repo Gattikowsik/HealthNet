@@ -76,4 +76,35 @@ public class ComplianceRepository : IComplianceRepository
             Notes        = c.Notes
         }).ToListAsync();
     }
+
+    /// <summary>
+    /// Updates the Result and Notes of an existing compliance record.
+    /// </summary>
+    /// <param name="complianceId"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task UpdateComplianceRecordAsync(int complianceId, UpdateComplianceRecordDto request)
+    {
+        var record = await _context.ComplianceRecords
+            .FirstOrDefaultAsync(c => c.ComplianceId == complianceId);
+
+        record!.Result = request.Result.ToLower();
+        record!.Notes  = request.Notes;
+
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Deletes a compliance record by setting IsDeleted to true.
+    /// </summary>
+    /// <param name="complianceId"></param>
+    /// <returns></returns>
+    public async Task DeleteComplianceRecordAsync(int complianceId)
+    {
+        var record = await _context.ComplianceRecords
+            .FirstOrDefaultAsync(c => c.ComplianceId == complianceId);
+
+        record!.IsDeleted = true;
+        await _context.SaveChangesAsync();
+    }
 }

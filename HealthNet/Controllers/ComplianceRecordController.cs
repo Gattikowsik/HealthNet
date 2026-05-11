@@ -88,5 +88,66 @@ namespace HealthNet.Controllers
                 return StatusCode(500, ComplianceHelper.GenericError); // 500 — unexpected error
             }
         }
+
+        /// <summary>
+        /// Endpoint to update an existing compliance record. Only accessible by users with the "Compliance Officer" role. Cannot update if record is compliant or deleted. 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPut("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> UpdateComplianceRecordAsync(int id, [FromBody] UpdateComplianceRecordDto request)
+        {
+            try
+            {
+                await _complianceRecordService.UpdateComplianceRecordAsync(id, request);
+                return Ok("Compliance record updated successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch
+            {
+                return StatusCode(500, ComplianceHelper.GenericError);
+            }
+        }
+
+        /// <summary>
+        /// Endpoint to soft delete a compliance record by setting IsDeleted to true. Only accessible by users with the "Compliance Officer" role. Cannot delete if already deleted.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> SoftDeleteComplianceRecordAsync(int id)
+        {
+            try
+            {
+                await _complianceRecordService.DeleteComplianceRecordAsync(id);
+                return Ok("Compliance record deleted successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch
+            {
+                return StatusCode(500, ComplianceHelper.GenericError);
+            }
+        }
     }
 }

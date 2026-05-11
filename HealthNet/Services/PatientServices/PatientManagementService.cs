@@ -169,4 +169,105 @@ public class PatientManagementService : IPatientManagementService
 
         return true;
     }
+    public async Task<Patient?> GetPatientByIdAsync(int patientId, int userId)
+    {
+        var patient = await _context.Patients
+            .FirstOrDefaultAsync(p => p.PatientId == patientId);
+
+        if (patient == null)
+            return null;
+
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == "Read")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            ActionId = actionId,
+            Resource = "Patient",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return patient;
+    }
+    public async Task<UpdatePatientResponseDto> UpdatePatientAsync(int patientId, UpdatePatientDto dto,
+    int userId)
+    {
+        var patient = await _context.Patients
+            .FirstOrDefaultAsync(p => p.PatientId == patientId);
+
+        if (patient == null)
+            throw new KeyNotFoundException();
+
+        if (!Regex.IsMatch(dto.Name, @"^[A-Za-z\s]+$"))
+        {
+            return new UpdatePatientResponseDto
+            {
+                Success = false,
+                Message = "Name must contain only alphabets."
+            };
+        }
+
+        if (dto.DOB > DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            return new UpdatePatientResponseDto
+            {
+                Success = false,
+                Message = "DOB cannot be in future."
+            };
+        }
+
+        var allowedGenders = new[] { "Male", "Female", "Other" };
+        if (!allowedGenders.Contains(dto.Gender, StringComparer.OrdinalIgnoreCase))
+        {
+            return new UpdatePatientResponseDto
+            {
+                Success = false,
+                Message = "Invalid gender."
+            };
+        }
+
+        if (!Regex.IsMatch(dto.ContactInfo, @"^\d+$"))
+        {
+            return new UpdatePatientResponseDto
+            {
+                Success = false,
+                Message = "Contact must be digits only."
+            };
+        }
+
+        // Update fields
+        patient.Name = dto.Name;
+        patient.DOB = dto.DOB;
+        patient.Gender = dto.Gender;
+        patient.Address = dto.Address;
+        patient.ContactInfo = dto.ContactInfo;
+
+        await _context.SaveChangesAsync();
+
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == "Update")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            ActionId = actionId,
+            Resource = "Patient",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return new UpdatePatientResponseDto
+        {
+            Success = true,
+            Message = "Patient updated successfully"
+        };
+    }
 }

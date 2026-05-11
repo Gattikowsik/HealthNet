@@ -27,6 +27,8 @@ using HealthNet.Repository.AuditRepository;
 using HealthNet.Repository.ReportingAndAnalytics;
 using HealthNet.Services.ReportingAndAnalyticsServices;
 using HealthNet.Services.AutoTriage;
+using HealthNet.Repository.CaseRepository;
+using HealthNet.Services.CaseService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,8 @@ builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddHttpClient<LocationHelper>();
 builder.Services.AddScoped<IReportingAndAnalyticsRepository,ReportingAndAnalyticsRepository>();
 builder.Services.AddScoped<IReportingAndAnalyticsService,ReportingAndAnalyticsService>();
+builder.Services.AddScoped<ICasesRepository, CasesRepository>();
+builder.Services.AddScoped<ICasesService, CasesService>();
 builder.Services.AddDbContext<HealthNetContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")

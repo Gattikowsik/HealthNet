@@ -7,7 +7,7 @@ namespace HealthNet.Repository.ComplianceRecord;
 
 public class ComplianceRepository : IComplianceRepository
 {
-    HealthNetContext _context;
+    private readonly HealthNetContext _context;
     public ComplianceRepository(HealthNetContext context)
     {
         _context = context;

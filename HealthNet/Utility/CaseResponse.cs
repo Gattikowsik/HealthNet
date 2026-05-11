@@ -10,5 +10,4 @@ public class CaseResponse
     public string? Diagnosis { get; set; }
     public DateTime RegisteredDate { get; set; }
     public string? Status { get; set; }
-
 }

@@ -374,6 +374,21 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
                 Message = "Recoveries cannot be greater than cases"
             };
         }
+
+        // ✅ DUPLICATE CHECK
+        // Blocks ONLY if OutbreakId + Date + MetricsJSON are the same
+        bool duplicateExists = await _repository.EpidemiologyDuplicateExistsAsync(
+                outbreakId,request.Date);
+
+        if (duplicateExists)
+        {
+            return new AddEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology record with the same outbreak, date, and metrics already exists."
+            };
+        }
+
         // Create Epidemiology record
         var epi = new Epidemiology
         {
@@ -400,6 +415,71 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             EpiId = epiId
         };
     }
+
+    public async Task<DeleteResponseDto> DeleteOutbreakService(int userId, int outbreakId)
+    {
+        var outbreak = await _repository.GetOutbreakByIdAsync(outbreakId);
+
+        if (outbreak == null)
+        {
+            return new DeleteResponseDto
+            {
+                Success = false,
+                Message = "Outbreak not found"
+            };
+        }
+
+        await _repository.DeleteOutbreakAsync(outbreakId);
+
+        // ✅ Audit log
+        await _repository.AddAuditLogAsync(userId, "Delete", "Outbreak");
+
+        return new DeleteResponseDto
+        {
+            Success = true,
+            Message = "Outbreak deleted successfully"
+        };
+    }
+
+    public async Task<DeleteResponseDto> DeleteEpidemiologyService(int userId, int epiId)
+    {
+        var deleted = await _repository.SoftDeleteEpidemiologyAsync(epiId);
+
+        if (!deleted)
+        {
+            return new DeleteResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology record not found"
+            };
+        }
+
+        await _repository.AddAuditLogAsync(userId, "Delete", "Epidemiology");
+
+        return new DeleteResponseDto
+        {
+            Success = true,
+            Message = "Epidemiology record deleted successfully"
+        };
+    }
+
+
+    public async Task<List<GetEpidemiologyResponseDto>> GetAllEpidemiologyService()
+    {
+        var records = await _repository.GetAllEpidemiologyAsync();
+
+        return records.Select(e => new GetEpidemiologyResponseDto
+        {
+            EpiId = e.EpiId,
+            OutbreakId = e.OutbreakId,
+            MetricsJSON = e.MetricsJSON,
+            Date = e.Date,
+            Status = e.Status
+        }).ToList();
+    }
+
+
+
     public async Task<List<GetActiveOutbreaksResponseDto>> GetAllActiveOutbreaksService()
     {
         var outbreaks = await _repository.GetAllActiveOutbreaksAsync();
@@ -414,5 +494,112 @@ public class OutbreakMonitoringServices : IOutbreakMonitoringServices
             Severity = o.Severity,
             Status = o.Status
         }).ToList();
+    }
+
+    public async Task<UpdateEpidemiologyResponseDto> UpdateEpidemiologyService(int userId,int epiId, UpdateEpidemiologyRequestDto request)
+    {
+        // ✅ Fetch existing epidemiology
+        var existingEpi = await _repository.GetEpidemiologyByIdAsync(epiId);
+
+        if (existingEpi == null)
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology record not found"
+            };
+        }
+
+        // ✅ Fetch related outbreak
+        var outbreak = await _repository.GetOutbreakByIdAsync(existingEpi.OutbreakId);
+        if (outbreak == null)
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Related outbreak not found"
+            };
+        }
+
+        // ✅ 1. Date must NOT be in future
+        if (request.Date.Date > DateTime.UtcNow.Date)
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be in the future"
+            };
+        }
+
+        // ✅ 2. Date must NOT be before outbreak start date
+        if (request.Date.Date < outbreak.StartDate.Date)
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be before outbreak start date"
+            };
+        }
+
+        // ✅ 3. If outbreak is closed → date must be ≤ end date
+        if (!outbreak.Status && request.Date.Date > outbreak.EndDate.Date)
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "Epidemiology date cannot be after outbreak end date for a closed outbreak"
+            };
+        }
+
+        // ✅ Validate Metrics JSON
+        try
+        {
+            JsonDocument.Parse(request.MetricsJSON);
+        }
+        catch
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "MetricsJSON must be valid JSON"
+            };
+        }
+
+        // ✅ Perform update
+        bool updated = await _repository.UpdateEpidemiologyAsync(epiId, request);
+
+        if (!updated)
+        {
+            return new UpdateEpidemiologyResponseDto
+            {
+                Success = false,
+                Message = "No changes detected to update"
+            };
+        }
+
+        // ✅ Audit log
+        await _repository.AddAuditLogAsync(userId, "Update", "Epidemiology");
+
+        return new UpdateEpidemiologyResponseDto
+        {
+            Success = true,
+            Message = "Epidemiology updated successfully"
+        };
+    }
+
+    //get epidemiology by ID
+    public async Task<GetEpidemiologyResponseDto?> GetEpidemiologyByIdService(int epiId)
+    {
+        var epi = await _repository.GetEpidemiologyByIdAsync(epiId);
+        if (epi == null)
+            return null;
+        return new GetEpidemiologyResponseDto
+        {
+            EpiId = epi.EpiId,
+            OutbreakId = epi.OutbreakId,
+            MetricsJSON = epi.MetricsJSON,
+            Date = epi.Date,
+            Status = epi.Status
+        };
     }
 }

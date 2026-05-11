@@ -12,7 +12,7 @@ public class Epidemiology
 
     [ForeignKey(nameof(OutbreakNavigation))]
     public int OutbreakId { get; set; }
-   
+
     [Column(TypeName = "VARCHAR(500)")]
     [Required]
     public string MetricsJSON { get; set; } = null!;
@@ -22,6 +22,9 @@ public class Epidemiology
 
     [Required]
     public bool Status { get; set; }  //Active or Monitoring
+    
+    [Required]
+    public bool IsDeleted { get; set; } = false;
 
-    public virtual Outbreak OutbreakNavigation{get;set;} = null!;
+    public virtual Outbreak OutbreakNavigation { get; set; } = null!;
 }

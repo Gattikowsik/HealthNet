@@ -20,6 +20,7 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="DTOs\AuditDTO\" />
+    <Folder Include="DTOs\CaseDto\" />
     <Folder Include="DTOs\ComplianceRecordDto\" />
     <Folder Include="DTOs\MedicalRecordDto\" />
     <Folder Include="DTOs\LabReportDTO\" />
@@ -27,11 +28,13 @@
     <Folder Include="DTOs\PatientDto\" />
     <Folder Include="Repository\AuditRepository\" />
     <Folder Include="DTOs\ReportingAndAnalyticsDTO\" />
+    <Folder Include="Repository\CaseRepository\" />
     <Folder Include="Repository\CitizenSymptomReportingRepository\LabReportRepo\" />
     <Folder Include="Repository\ComplianceRecord\" />
     <Folder Include="Repository\MedicalRepository\" />
     <Folder Include="Repository\PatientRepository\" />
     <Folder Include="Services\" />
+    <Folder Include="Services\CaseService\" />
     <Folder Include="Services\ComplianceRecordServices\" />
     <Folder Include="Services\MedicalServices\" />
     <Folder Include="Repository\LabReportRepo\" />

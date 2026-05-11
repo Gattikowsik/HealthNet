@@ -71,7 +71,8 @@ builder.Services.AddDbContext<HealthNetContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
-
+builder.Services.AddCors(options => options.AddPolicy("MyPolicy", policy=>
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -114,6 +115,7 @@ builder.Services.AddCors(options =>
 	});
 });
 var app = builder.Build();
+app.UseCors("MyPolicy");
 app.UseSwagger();
 app.UseSwaggerUI();
 // Configure the HTTP request pipeline.

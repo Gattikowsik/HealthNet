@@ -28,8 +28,7 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
     {
         try
         {
-            var query = _context.Outbreaks.AsQueryable();
-
+            var query = _context.Outbreaks.Where(o => !o.IsDeleted).AsQueryable();
             if (request.StartDate.HasValue)
             {
                 query = query.Where(o => o.StartDate >= request.StartDate);
@@ -219,7 +218,7 @@ public class ReportingAndAnalyticsRepository : IReportingAndAnalyticsRepository
     {
         try
         {
-            var query = _context.Epidemiologies.Include(e => e.OutbreakNavigation).AsQueryable();
+            var query = _context.Epidemiologies.Include(e => e.OutbreakNavigation).Where(e => !e.IsDeleted && !e.OutbreakNavigation.IsDeleted).AsQueryable();
 
             if (request.EpidemiologyDate.HasValue)
             {

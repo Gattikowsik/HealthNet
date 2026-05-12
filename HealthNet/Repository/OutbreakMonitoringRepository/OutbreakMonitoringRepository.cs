@@ -99,7 +99,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
     {
         try
         {
-            return await _context.Outbreaks.AsNoTracking().FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+            return await _context.Outbreaks.AsNoTracking().FirstOrDefaultAsync(o => o.OutbreakId == outbreakId && !o.IsDeleted);
         }
         catch (Exception ex)
         {
@@ -117,7 +117,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
     {
         try
         {
-            var outbreak = await _context.Outbreaks.FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+            var outbreak = await _context.Outbreaks.FirstOrDefaultAsync(o => o.OutbreakId == outbreakId && !o.IsDeleted);
             if (outbreak == null)
                 return UpdateOutbreakResult.NotFound;
 

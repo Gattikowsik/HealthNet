@@ -143,4 +143,70 @@ public class ComplianceRecordService : IComplianceRecordService
         // ── STEP 7: Return the records ─────────────────────────────
         return records;
     }
+
+    /// <summary>
+    /// Updates the Result and Notes of a compliance record. Cannot update if record is compliant or deleted.   
+    /// </summary>
+    /// <param name="complianceId"></param>
+    /// <param name="request"></param>
+    public async Task UpdateComplianceRecordAsync(int complianceId, UpdateComplianceRecordDto request)
+    {
+        // ── STEP 1: Validate Result ────────────────────────────────
+        var allowedResults = new[] { "non compliant", "partially compliant", "pending review" };
+        if (!allowedResults.Contains(request.Result.ToLower()))
+            throw new ArgumentException(ComplianceHelper.InvalidResult);
+
+        // ── STEP 2: Validate Notes ─────────────────────────────────
+        if (string.IsNullOrWhiteSpace(request.Notes))
+            throw new ArgumentException(ComplianceHelper.NotesRequired);
+
+        // ── STEP 3: Check if record exists ─────────────────────────
+        var record = await _context.ComplianceRecords
+            .FirstOrDefaultAsync(c => c.ComplianceId == complianceId);
+        if (record == null)
+            throw new KeyNotFoundException(ComplianceHelper.RecordNotFound);
+
+        // ── STEP 4: Cannot update if deleted ───────────────────────
+        if (record.IsDeleted)
+            throw new ArgumentException(ComplianceHelper.CannotUpdateDeleted);
+
+        // ── STEP 5: Cannot update if compliant ─────────────────────
+        if (record.Result == "compliant")
+            throw new ArgumentException(ComplianceHelper.CannotUpdateCompliant);
+
+        try
+        {
+            await _repository.UpdateComplianceRecordAsync(complianceId, request);
+        }
+        catch
+        {
+            throw new Exception(ComplianceHelper.GenericError);
+        }
+    }
+
+    /// <summary>
+    /// Soft deletes a compliance record by setting IsDeleted to true. Cannot delete if already deleted.
+    /// </summary>
+    /// <param name="complianceId"></param>
+    public async Task DeleteComplianceRecordAsync(int complianceId)
+    {
+        // ── STEP 1: Check if record exists ─────────────────────────
+        var record = await _context.ComplianceRecords
+            .FirstOrDefaultAsync(c => c.ComplianceId == complianceId);
+        if (record == null)
+            throw new KeyNotFoundException(ComplianceHelper.RecordNotFound);
+
+        // ── STEP 2: Cannot delete if already deleted ───────────────
+        if (record.IsDeleted)
+            throw new ArgumentException(ComplianceHelper.AlreadyDeleted);
+
+        try
+        {
+            await _repository.DeleteComplianceRecordAsync(complianceId);
+        }
+        catch
+        {
+            throw new Exception(ComplianceHelper.GenericError);
+        }
+    }
 }

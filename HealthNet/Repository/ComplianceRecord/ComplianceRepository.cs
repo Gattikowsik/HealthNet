@@ -69,11 +69,11 @@ public class ComplianceRepository : IComplianceRepository
         return await query.Select(c => new ComplianceRecordListDto
         {
             ComplianceId = c.ComplianceId,
-            EntityId     = c.EntityId,
-            Type         = c.Type,
-            Result       = c.Result,
-            Date         = c.Date,
-            Notes        = c.Notes
+            EntityId = c.EntityId,
+            Type = c.Type,
+            Result = c.Result,
+            Date = c.Date,
+            Notes = c.Notes
         }).ToListAsync();
     }
 
@@ -89,7 +89,7 @@ public class ComplianceRepository : IComplianceRepository
             .FirstOrDefaultAsync(c => c.ComplianceId == complianceId);
 
         record!.Result = request.Result.ToLower();
-        record!.Notes  = request.Notes;
+        record!.Notes = request.Notes;
 
         await _context.SaveChangesAsync();
     }
@@ -106,5 +106,26 @@ public class ComplianceRepository : IComplianceRepository
 
         record!.IsDeleted = true;
         await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Returns a single compliance record by its ID.
+    /// </summary>
+    /// <param name="complianceId">The ID of the compliance record</param>
+    /// <returns>ComplianceRecordListDto matching the given ID, or null if not found</returns>
+    public async Task<ComplianceRecordListDto?> GetComplianceRecordByIdAsync(int complianceId)
+    {
+        return await _context.ComplianceRecords
+            .Where(c => c.ComplianceId == complianceId)
+            .Select(c => new ComplianceRecordListDto
+            {
+                ComplianceId = c.ComplianceId,
+                EntityId = c.EntityId,
+                Type = c.Type,
+                Result = c.Result,
+                Date = c.Date,
+                Notes = c.Notes
+            })
+            .FirstOrDefaultAsync();
     }
 }

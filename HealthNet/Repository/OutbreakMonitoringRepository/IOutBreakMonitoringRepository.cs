@@ -19,7 +19,13 @@ public interface IOutBreakMonitoringRepository
     Task<Outbreak?> GetOutbreakByIdAsync(int outbreakId);
     Task<UpdateOutbreakResult> UpdateOutbreakAsync(int outbreakId, UpdateOutbreakRequestDto request);
     Task<bool> OutbreakExistsAsync(int outbreakId);
+    Task<bool> EpidemiologyDuplicateExistsAsync(int outbreakId, DateTime date);
     Task<int> AddEpidemiologyAsync(Epidemiology epidemiology);
+    Task<List<Epidemiology>> GetAllEpidemiologyAsync();
+    Task<Epidemiology?> GetEpidemiologyByIdAsync(int epiId);
+    Task<bool> UpdateEpidemiologyAsync(int epiId, UpdateEpidemiologyRequestDto request);
     Task<List<Outbreak>> GetAllActiveOutbreaksAsync();
+    Task<bool> DeleteOutbreakAsync(int outbreakId);
+    Task<bool> SoftDeleteEpidemiologyAsync(int epiId);
 
 }

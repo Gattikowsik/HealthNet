@@ -30,4 +30,8 @@ public class Outbreak
 
     [Required]
     public bool Status { get; set; }     //active or inactive
+
+    [Required]
+    public bool IsDeleted { get; set; } = false;
+
 }

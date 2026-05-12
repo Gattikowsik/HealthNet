@@ -187,7 +187,7 @@ namespace HealthNet.Controllers
         /// The user entity corresponding to the provided ID, or null if not found.
         /// </returns>
         [HttpGet("{id}")]
-        [Authorize(Roles ="Admin")]
+        // [Authorize(Roles ="Admin")]
         public async Task<IActionResult> GetUserById(int id)
         {
             try

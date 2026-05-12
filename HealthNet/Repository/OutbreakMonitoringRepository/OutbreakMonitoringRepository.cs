@@ -99,7 +99,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
     {
         try
         {
-            return await _context.Outbreaks.AsNoTracking().FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+            return await _context.Outbreaks.AsNoTracking().FirstOrDefaultAsync(o => o.OutbreakId == outbreakId && !o.IsDeleted);
         }
         catch (Exception ex)
         {
@@ -117,7 +117,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
     {
         try
         {
-            var outbreak = await _context.Outbreaks.FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+            var outbreak = await _context.Outbreaks.FirstOrDefaultAsync(o => o.OutbreakId == outbreakId && !o.IsDeleted);
             if (outbreak == null)
                 return UpdateOutbreakResult.NotFound;
 
@@ -168,6 +168,60 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
         await _context.SaveChangesAsync();
         return epidemiology.EpiId;
     }
+
+    public async Task<bool> DeleteOutbreakAsync(int outbreakId)
+    {
+        var outbreak = await _context.Outbreaks
+            .FirstOrDefaultAsync(o => o.OutbreakId == outbreakId);
+
+        if (outbreak == null)
+            return false;
+
+        // SOFT DELETE
+        outbreak.IsDeleted = true;
+        outbreak.Status = false; // close outbreak
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// Delete Epidemiology
+    /// </summary>
+    /// <param name="epiId"></param>
+    /// <returns></returns>
+    public async Task<bool> SoftDeleteEpidemiologyAsync(int epiId)
+    {
+        var epi = await _context.Epidemiologies
+            .FirstOrDefaultAsync(e => e.EpiId == epiId);
+
+        if (epi == null)
+            return false;
+
+        epi.IsDeleted = true;   // soft delete
+        epi.Status = false;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> EpidemiologyDuplicateExistsAsync(int outbreakId, DateTime date)
+    {
+        return await _context.Epidemiologies.AnyAsync(e =>
+            e.OutbreakId == outbreakId &&
+            e.Date.Date == date.Date &&
+            //e.MetricsJSON == metricsJson &&
+            !e.IsDeleted);
+    }
+
+    public async Task<List<Epidemiology>> GetAllEpidemiologyAsync()
+    {
+        return await _context.Epidemiologies
+            .Where(e => !e.IsDeleted)
+            .ToListAsync();
+    }
+
+    //Get ALLACTIVEOUTBREAKS
     public async Task<List<Outbreak>> GetAllActiveOutbreaksAsync()
     {
         try
@@ -176,6 +230,7 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
                 .AsNoTracking()
                 .Where(o => o.Status == true) // ALL ACTIVE
                 .OrderBy(o => o.OutbreakId)
+                .Where(e => !e.IsDeleted)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -183,4 +238,51 @@ public class OutbreakMonitoringRepository : IOutBreakMonitoringRepository
             throw new HealthNetException("Error while retrieving active outbreaks: " + ex.Message);
         }
     }
+
+    //get epidemiology
+    public async Task<Epidemiology?> GetEpidemiologyByIdAsync(int epiId)
+    {
+        return await _context.Epidemiologies
+               .FirstOrDefaultAsync(e => e.EpiId == epiId && !e.IsDeleted);
+    }
+
+    //Update Epidemilogy
+    public async Task<bool> UpdateEpidemiologyAsync(int epiId, UpdateEpidemiologyRequestDto request)
+    {
+        var epi = await _context.Epidemiologies.FirstOrDefaultAsync(e => e.EpiId == epiId && !e.IsDeleted);
+        if (epi == null)
+            return false;
+
+        var conflict = await _context.Epidemiologies.AnyAsync(e =>
+                e.OutbreakId == epi.OutbreakId &&
+                e.Date.Date == request.Date.Date &&
+                e.EpiId != epiId &&
+                !e.IsDeleted);
+
+        if (conflict)
+            return false;
+
+        bool hasChanges = false;
+        if (epi.MetricsJSON != request.MetricsJSON)
+        {
+            epi.MetricsJSON = request.MetricsJSON;
+            hasChanges = true;
+        }
+        if (epi.Date != request.Date)
+        {
+            epi.Date = request.Date;
+            hasChanges = true;
+        }
+        if (epi.Status != request.Status)
+        {
+            epi.Status = request.Status;
+            hasChanges = true;
+        }
+        if (!hasChanges)
+            return true; // no change, still OK
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
 }

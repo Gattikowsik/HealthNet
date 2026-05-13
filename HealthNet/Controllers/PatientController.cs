@@ -22,13 +22,20 @@ namespace HealthNet.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer},{Roles.LabTechnician}")]
         public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchDto searchDto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int userId = int.Parse(userIdClaim!);
-
-            var result = await _patientService.SearchPatientsAsync(searchDto, userId);
-            return Ok(result);
+            try
+            {
+                var result = await _patientService.SearchPatientsAsync(searchDto, userId);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost]
@@ -88,6 +95,7 @@ namespace HealthNet.Controllers
         }
 
         [HttpGet("{patientId}")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}, {Roles.PublicHealthOfficer},{Roles.LabTechnician}")]
         [ProducesResponseType(typeof(Patient), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetPatientById(int patientId)

@@ -46,7 +46,7 @@ namespace HealthNet.Controllers
 
         //GET /api/patients/{id}/records
         [HttpGet("{patientId}/records")]
-        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer}")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -94,6 +94,42 @@ namespace HealthNet.Controllers
                 }
 
                 return Ok("Medical record closed successfully.");
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Medical record not found.");
+            }
+        }
+
+        //PUT /api/v1/MedicalRecord/{recordId}
+        [HttpPut("{recordId}")]
+        [Authorize(Roles = $"{Roles.Doctor}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateMedicalRecord(
+            int recordId,
+            [FromBody] MedicalRecordRequestDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized();
+
+            int doctorId = int.Parse(userIdClaim);
+
+            try
+            {
+                var result = await _service.UpdateMedicalRecordAsync(recordId, doctorId, dto);
+
+                if (!result.Success)
+                {
+                    return BadRequest(result.Message);
+                }
+
+                return Ok("Medical record updated successfully.");
             }
             catch (KeyNotFoundException)
             {

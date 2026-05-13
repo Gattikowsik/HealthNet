@@ -59,7 +59,7 @@ namespace HealthNet.Controllers
         /// </summary>
         /// <param name="id"> The ID of the audit to close </param>
         /// <returns> 200 OK if closed successfully </returns>
-        [HttpPatch("{id}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
@@ -80,6 +80,81 @@ namespace HealthNet.Controllers
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message); // 400 — already closed
+            }
+            catch
+            {
+                return StatusCode(500, AuditHelper.GenericError);
+            }
+        }
+
+        /// <summary>
+        /// Get all audits with optional filters
+        /// </summary>
+        [HttpGet]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetAllAuditsAsync([FromQuery] AuditFilterDto filter)
+        {
+            try
+            {
+                var result = await _auditService.GetAllAuditsAsync(filter);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);    // 404 — no audits found
+            }
+            catch
+            {
+                return StatusCode(500, AuditHelper.GenericError);
+            }
+        }
+
+        /// <summary>
+        /// Get a single audit by ID
+        /// </summary>
+        [HttpGet("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetAuditByIdAsync(int id)
+        {
+            try
+            {
+                var result = await _auditService.GetAuditByIdAsync(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);    // 404 — audit not found
+            }
+            catch
+            {
+                return StatusCode(500, AuditHelper.GenericError);
+            }
+        }
+
+        /// <summary>
+        /// Update Scope and Findings of an audit
+        /// Blocked if Status = false (closed)
+        /// </summary>
+        [HttpPut("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> UpdateAuditAsync(int id, [FromBody] UpdateAuditDto request)
+        {
+            try
+            {
+                await _auditService.UpdateAuditAsync(id, request);
+                return Ok("Audit updated successfully.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);  // 400 — validation or closed
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);    // 404 — not found
             }
             catch
             {

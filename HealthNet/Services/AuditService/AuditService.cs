@@ -132,5 +132,66 @@ public class AuditService : IAuditService
             throw new Exception(AuditHelper.GenericError);
         }
     }
+    public async Task<IEnumerable<AuditListDto>> GetAllAuditsAsync(AuditFilterDto filter)
+    {
+        var audits = await _repository.GetAllAuditsAsync(filter);
+
+        if (!audits.Any())
+            throw new KeyNotFoundException(AuditHelper.NoAuditsFound);
+
+        return audits;
+    }
+
+    // <summary>
+    // Returns a single audit by ID
+    // </summary>
+    public async Task<AuditListDto> GetAuditByIdAsync(int auditId)
+    {
+        var audit = await _repository.GetAuditByIdAsync(auditId);
+
+        if (audit == null)
+            throw new KeyNotFoundException(AuditHelper.AuditNotFound);
+
+        return audit;
+    }
+
+    // <summary>
+    // Updates Scope and Findings
+    // Blocked if Status = false (closed)
+    // </summary>
+    public async Task UpdateAuditAsync(int auditId, UpdateAuditDto request)
+    {
+        // ── STEP 1: Validate Scope ─────────────────────────────────
+        if (string.IsNullOrWhiteSpace(request.Scope))
+            throw new ArgumentException(AuditHelper.ScopeRequired);
+
+        if (request.Scope.ToLower() == "string" || request.Scope.All(char.IsDigit))
+            throw new ArgumentException(AuditHelper.InvalidScope);
+
+        // ── STEP 2: Validate Findings ──────────────────────────────
+        if (string.IsNullOrWhiteSpace(request.Findings))
+            throw new ArgumentException(AuditHelper.FindingsRequired);
+
+        if (request.Findings.ToLower() == "string" || request.Findings.All(char.IsDigit))
+            throw new ArgumentException(AuditHelper.InvalidFindings);
+
+        // ── STEP 3: Check if audit exists ──────────────────────────
+        var audit = await _context.Audits.FirstOrDefaultAsync(a => a.AuditId == auditId);
+        if (audit == null)
+            throw new KeyNotFoundException(AuditHelper.AuditNotFound);
+
+        // ── STEP 4: Cannot update if closed ────────────────────────
+        if (audit.Status == false)
+            throw new ArgumentException(AuditHelper.AuditAlreadyClosed);
+
+        try
+        {
+            await _repository.UpdateAuditAsync(auditId, request);
+        }
+        catch
+        {
+            throw new Exception(AuditHelper.GenericError);
+        }
+    }
 
 }

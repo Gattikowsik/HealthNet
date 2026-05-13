@@ -23,6 +23,13 @@ public class PatientManagementService : IPatientManagementService
 
     public async Task<PagedResponseDto<Patient>> SearchPatientsAsync(PatientSearchDto searchDto, int userId)
     {
+
+        if (!string.IsNullOrWhiteSpace(searchDto.Name) &&
+                !Regex.IsMatch(searchDto.Name, @"^[A-Za-z\s]+$"))
+        {
+            throw new ArgumentException("Name must contain only alphabets and spaces.");
+        }
+
         var result = await _patientRepository.SearchPatientsAsync(searchDto);
 
         var actionId = await _context

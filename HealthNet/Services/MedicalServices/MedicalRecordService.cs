@@ -209,4 +209,81 @@ public class MedicalRecordService : IMedicalRecordService
 
         return true;
     }
+    public async Task<MedicalRecordResponseDto> UpdateMedicalRecordAsync(
+    int recordId,
+    int doctorId,
+    MedicalRecordRequestDto dto)
+    {
+        // ✅ Validation
+        if (dto.Date > DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Date cannot be in the future."
+            };
+        }
+
+        if (!dto.Diagnosis.Any(char.IsLetter))
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Diagnosis must contain meaningful text."
+            };
+        }
+
+        if (!dto.TreatmentPlan.Any(char.IsLetter))
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Treatment plan must contain meaningful text."
+            };
+        }
+
+        var record = await _context.MedicalRecords
+            .FirstOrDefaultAsync(r => r.RecordId == recordId);
+
+        if (record == null)
+            throw new KeyNotFoundException();
+
+        if (record.Status == MedicalRecordStatus.Inactive)
+        {
+            return new MedicalRecordResponseDto
+            {
+                Success = false,
+                Message = "Cannot update a closed medical record."
+            };
+        }
+
+        // ✅ Update fields
+        record.Diagnosis = dto.Diagnosis;
+        record.TreatmentPlan = dto.TreatmentPlan;
+        record.Date = dto.Date;
+
+        await _context.SaveChangesAsync();
+
+        // Audit Log (Update action)
+        var actionId = await _context.Actions
+            .Where(a => a.ActionName == "Update")
+            .Select(a => a.ActionId)
+            .FirstAsync();
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = doctorId,
+            ActionId = actionId,
+            Resource = "MedicalRecord",
+            Timestamp = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return new MedicalRecordResponseDto
+        {
+            Success = true,
+            RecordId = record.RecordId
+        };
+    }
 }

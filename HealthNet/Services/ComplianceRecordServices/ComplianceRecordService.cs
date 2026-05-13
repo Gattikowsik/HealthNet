@@ -39,10 +39,10 @@ public class ComplianceRecordService : IComplianceRecordService
             throw new ArgumentException(ComplianceHelper.InvalidResult);
         // ── STEP 3: Check for duplicate compliance record ──────
         var isDuplicate = await _context.ComplianceRecords
-            .AnyAsync(c => c.EntityId == request.EntityId 
+            .AnyAsync(c => c.EntityId == request.EntityId
                         && c.Type == request.Type.ToLower());
         if (isDuplicate)
-            throw new ArgumentException(ComplianceHelper.DuplicateRecord);    
+            throw new ArgumentException(ComplianceHelper.DuplicateRecord);
 
         // ── STEP 4: Check if EntityId exists in respective table ───
         bool entityExists = request.Type.ToLower() switch
@@ -94,7 +94,7 @@ public class ComplianceRecordService : IComplianceRecordService
     // </summary>
     // <param name="filter"> Filter DTO containing optional filters </param>
     // <returns> List of ComplianceRecordListDto matching the filters </returns>
-    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter,int userId)
+    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter, int userId)
     {
         // ── STEP 1: Validate Type if provided ──────────────────────
         var allowedTypes = new[] { "case", "test", "outbreak" };
@@ -127,9 +127,9 @@ public class ComplianceRecordService : IComplianceRecordService
             // ── STEP 6: Log to AuditLog ────────────────────────────
             var auditLog = new HealthNetDb.Entities.AuditLog
             {
-                UserId    = userId,
-                ActionId  = actionId,       
-                Resource  = "ComplianceRecord",
+                UserId = userId,
+                ActionId = actionId,
+                Resource = "ComplianceRecord",
                 Timestamp = DateTime.UtcNow
             };
             _context.AuditLogs.Add(auditLog);
@@ -208,5 +208,49 @@ public class ComplianceRecordService : IComplianceRecordService
         {
             throw new Exception(ComplianceHelper.GenericError);
         }
+    }
+
+    /// <summary>
+    /// Returns a single compliance record by its ID.
+    /// </summary>
+    /// <param name="complianceId">The ID of the compliance record</param>
+    /// <param name="userId">UserId extracted from the JWT token of the logged in user</param>
+    /// <returns>ComplianceRecordListDto matching the given ID</returns>
+    public async Task<ComplianceRecordListDto> GetComplianceRecordByIdAsync(int complianceId, int userId)
+    {
+        // ── STEP 1: Fetch from repository ──────────────────────────
+        var record = await _repository.GetComplianceRecordByIdAsync(complianceId);
+
+        // ── STEP 2: Check if record was found ──────────────────────
+        if (record == null)
+            throw new KeyNotFoundException(ComplianceHelper.RecordNotFound);
+
+        try
+        {
+            // ── STEP 3: Get ActionId for "Read" from Action table ───
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // ── STEP 4: Log to AuditLog ────────────────────────────
+            var auditLog = new HealthNetDb.Entities.AuditLog
+            {
+                UserId = userId,
+                ActionId = actionId,
+                Resource = "ComplianceRecord",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception(ComplianceHelper.GenericError);
+        }
+
+        // ── STEP 5: Return the record ──────────────────────────────
+        return record;
     }
 }

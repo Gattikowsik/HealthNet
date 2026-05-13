@@ -28,5 +28,6 @@ public class ComplianceRecord
     [Column(TypeName = "VARCHAR(200)")]
     public string Notes { get; set; } = null!;
 
-    public bool IsDeleted{get;set;}=false;
+    [Required]
+    public bool IsDeleted { get; set; } = false;
 }

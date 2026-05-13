@@ -11,4 +11,6 @@ public interface IComplianceRepository
     Task<IEnumerable<ComplianceRecordListDto>> GetComplianceRecordsAsync(ComplianceRecordFilterDto filter);
     Task UpdateComplianceRecordAsync(int complianceId, UpdateComplianceRecordDto request);
     Task DeleteComplianceRecordAsync(int complianceId); 
+
+    Task<ComplianceRecordListDto?> GetComplianceRecordByIdAsync(int complianceId);
 }

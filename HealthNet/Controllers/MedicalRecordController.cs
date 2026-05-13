@@ -46,7 +46,7 @@ namespace HealthNet.Controllers
 
         //GET /api/patients/{id}/records
         [HttpGet("{patientId}/records")]
-        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor}")]
+        [Authorize(Roles = $"{Roles.Admin}, {Roles.Doctor},{Roles.LabTechnician},{Roles.PublicHealthOfficer}")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

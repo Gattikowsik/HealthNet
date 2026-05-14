@@ -149,5 +149,32 @@ namespace HealthNet.Controllers
                 return StatusCode(500, ComplianceHelper.GenericError);
             }
         }
+
+        /// <summary>
+        /// Endpoint to get a compliance record by ID. Only accessible by users with the "Compliance Officer" role.
+        /// </summary>
+        /// <param name="id">The ID of the compliance record</param>
+        /// <returns>The compliance record matching the given ID</returns>
+        [HttpGet("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetComplianceRecordByIdAsync(int id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(userIdClaim!);
+                var result = await _complianceRecordService.GetComplianceRecordByIdAsync(id, userId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch
+            {
+                return StatusCode(500, ComplianceHelper.GenericError);
+            }
+        }
     }
 }

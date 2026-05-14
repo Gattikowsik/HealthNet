@@ -209,4 +209,48 @@ public class ComplianceRecordService : IComplianceRecordService
             throw new Exception(ComplianceHelper.GenericError);
         }
     }
+
+    /// <summary>
+    /// Returns a single compliance record by its ID.
+    /// </summary>
+    /// <param name="complianceId">The ID of the compliance record</param>
+    /// <param name="userId">UserId extracted from the JWT token of the logged in user</param>
+    /// <returns>ComplianceRecordListDto matching the given ID</returns>
+    public async Task<ComplianceRecordListDto> GetComplianceRecordByIdAsync(int complianceId, int userId)
+    {
+        // ── STEP 1: Fetch from repository ──────────────────────────
+        var record = await _repository.GetComplianceRecordByIdAsync(complianceId);
+
+        // ── STEP 2: Check if record was found ──────────────────────
+        if (record == null)
+            throw new KeyNotFoundException(ComplianceHelper.RecordNotFound);
+
+        try
+        {
+            // ── STEP 3: Get ActionId for "Read" from Action table ───
+            var actionId = await _context
+                .Set<HealthNetDb.Entities.Action>()
+                .Where(a => a.ActionName == "Read")
+                .Select(a => a.ActionId)
+                .FirstAsync();
+
+            // ── STEP 4: Log to AuditLog ────────────────────────────
+            var auditLog = new HealthNetDb.Entities.AuditLog
+            {
+                UserId = userId,
+                ActionId = actionId,
+                Resource = "ComplianceRecord",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception(ComplianceHelper.GenericError);
+        }
+
+        // ── STEP 5: Return the record ──────────────────────────────
+        return record;
+    }
 }

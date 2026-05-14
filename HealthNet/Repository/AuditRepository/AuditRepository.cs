@@ -58,5 +58,67 @@ public class AuditRepository : IAuditRepository
         await _context.SaveChangesAsync();
 
     }
+    public async Task<IEnumerable<AuditListDto>> GetAllAuditsAsync(AuditFilterDto filter)
+    {
+        // Start with all records — nothing hits DB yet
+        var query = _context.Audits.AsQueryable();
+
+        // Apply filters only if provided
+        if (filter.AuditId.HasValue)
+            query = query.Where(a => a.AuditId == filter.AuditId.Value);
+
+        if (filter.OfficerId.HasValue)
+            query = query.Where(a => a.OfficerId == filter.OfficerId.Value);
+
+        if (!string.IsNullOrWhiteSpace(filter.Scope))
+            query = query.Where(a => a.Scope.ToLower().Contains(filter.Scope.ToLower()));
+
+        if (!string.IsNullOrWhiteSpace(filter.Findings))
+            query = query.Where(a => a.Findings.ToLower().Contains(filter.Findings.ToLower()));
+
+        if (filter.Date.HasValue)
+            query = query.Where(a => a.Date.Date == filter.Date.Value.Date);
+
+        // Hit DB here and map to DTO
+        return await query.Select(a => new AuditListDto
+        {
+            AuditId   = a.AuditId,
+            OfficerId = a.OfficerId,
+            Scope     = a.Scope,
+            Findings  = a.Findings,
+            Date      = a.Date,
+            Status    = a.Status
+        }).ToListAsync();
+    }
+
+    /// <summary>
+    /// Returns a single audit by ID.
+    /// </summary>
+    public async Task<AuditListDto?> GetAuditByIdAsync(int auditId)
+    {
+        return await _context.Audits
+            .Where(a => a.AuditId == auditId)
+            .Select(a => new AuditListDto
+            {
+                AuditId   = a.AuditId,
+                OfficerId = a.OfficerId,
+                Scope     = a.Scope,
+                Findings  = a.Findings,
+                Date      = a.Date,
+                Status    = a.Status
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// Updates Scope and Findings of an audit.
+    /// </summary>
+    public async Task UpdateAuditAsync(int auditId, UpdateAuditDto request)
+    {
+        var audit = await _context.Audits.FirstOrDefaultAsync(a => a.AuditId == auditId);
+        audit!.Scope    = request.Scope;
+        audit!.Findings = request.Findings;
+        await _context.SaveChangesAsync();
+    }
 
 }

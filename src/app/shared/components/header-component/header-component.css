@@ -1,0 +1,58 @@
+.btn-color{
+    background-color: #7F00FF;
+    color: white;
+}
+.btn-color:hover{
+    background-color: #6309bd;
+}
+.btn-outline-color{
+    border: 1px solid #7F00FF;
+    color: #7F00FF;
+}
+.btn-outline-color:hover{
+    color: white;
+    background-color: #6309bd;
+}
+
+.profile-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    cursor: pointer;
+}
+
+/* .account-icon{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 55px;
+
+} */
+
+.dropdown-menu-custom {
+  position: absolute;
+  right: 0;
+  top: 52px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1000;
+}
+
+.dropdown-menu-custom button {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown-menu-custom button:hover {
+  background: #f5f5f5;
+}

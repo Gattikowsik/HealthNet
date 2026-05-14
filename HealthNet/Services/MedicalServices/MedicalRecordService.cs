@@ -154,6 +154,7 @@ public class MedicalRecordService : IMedicalRecordService
     {
         return new MedicalRecordGetDto
         {
+            RecordId=record.RecordId,
             Date = record.Date,
             Diagnosis = record.Diagnosis,
             TreatmentPlan = record.TreatmentPlan,

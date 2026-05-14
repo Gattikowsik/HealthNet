@@ -39,10 +39,10 @@ public class ComplianceRecordService : IComplianceRecordService
             throw new ArgumentException(ComplianceHelper.InvalidResult);
         // ── STEP 3: Check for duplicate compliance record ──────
         var isDuplicate = await _context.ComplianceRecords
-            .AnyAsync(c => c.EntityId == request.EntityId 
+            .AnyAsync(c => c.EntityId == request.EntityId
                         && c.Type == request.Type.ToLower());
         if (isDuplicate)
-            throw new ArgumentException(ComplianceHelper.DuplicateRecord);    
+            throw new ArgumentException(ComplianceHelper.DuplicateRecord);
 
         // ── STEP 4: Check if EntityId exists in respective table ───
         bool entityExists = request.Type.ToLower() switch
@@ -94,7 +94,7 @@ public class ComplianceRecordService : IComplianceRecordService
     // </summary>
     // <param name="filter"> Filter DTO containing optional filters </param>
     // <returns> List of ComplianceRecordListDto matching the filters </returns>
-    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter,int userId)
+    public async Task<IEnumerable<ComplianceRecordListDto>> GetAllComplianceRecordsAsync(ComplianceRecordFilterDto filter, int userId)
     {
         // ── STEP 1: Validate Type if provided ──────────────────────
         var allowedTypes = new[] { "case", "test", "outbreak" };
@@ -127,9 +127,9 @@ public class ComplianceRecordService : IComplianceRecordService
             // ── STEP 6: Log to AuditLog ────────────────────────────
             var auditLog = new HealthNetDb.Entities.AuditLog
             {
-                UserId    = userId,
-                ActionId  = actionId,       
-                Resource  = "ComplianceRecord",
+                UserId = userId,
+                ActionId = actionId,
+                Resource = "ComplianceRecord",
                 Timestamp = DateTime.UtcNow
             };
             _context.AuditLogs.Add(auditLog);
@@ -152,7 +152,7 @@ public class ComplianceRecordService : IComplianceRecordService
     public async Task UpdateComplianceRecordAsync(int complianceId, UpdateComplianceRecordDto request)
     {
         // ── STEP 1: Validate Result ────────────────────────────────
-        var allowedResults = new[] { "non compliant", "partially compliant", "pending review" };
+        var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
         if (!allowedResults.Contains(request.Result.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidResult);
 

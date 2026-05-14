@@ -79,14 +79,14 @@ namespace HealthNet.Controllers
 
             try
             {
-                bool result = await _patientService.DeactivatePatientAsync(patientId, userId);
+                var result = await _patientService.DeactivatePatientAsync(patientId, userId);
 
-                if (!result)
+                if (!result.Success)
                 {
-                    return BadRequest("Patient is already inactive.");
+                    return BadRequest(result.Message);
                 }
 
-                return Ok("Patient deactivated successfully.");
+                return Ok(result.Message);
             }
             catch (KeyNotFoundException)
             {

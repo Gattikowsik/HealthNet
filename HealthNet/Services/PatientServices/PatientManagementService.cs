@@ -143,39 +143,74 @@ public class PatientManagementService : IPatientManagementService
             PatientId = saved.PatientId
         };
     }
-    public async Task<bool> DeactivatePatientAsync(int patientId, int userId)
+
+    public async Task<DeactivatePatientDto> DeactivatePatientAsync(int patientId, int userId)
+{
+    var patient = await _context.Patients
+        .FirstOrDefaultAsync(p => p.PatientId == patientId);
+
+    // ✅ 1. Patient not found
+    if (patient == null)
     {
-        var patient = await _context.Patients
-            .FirstOrDefaultAsync(p => p.PatientId == patientId);
-
-        if (patient == null)
-            throw new KeyNotFoundException("Patient not found");
-
-        if (patient.Status == PatientStatus.InActive)
-            return false; // already inactive
-
-        patient.Status = PatientStatus.InActive;
-
-        await _context.SaveChangesAsync();
-
-        // ✅ Audit log
-        var actionId = await _context.Actions
-            .Where(a => a.ActionName == "Delete")
-            .Select(a => a.ActionId)
-            .FirstAsync();
-
-        _context.AuditLogs.Add(new AuditLog
+        return new DeactivatePatientDto
         {
-            UserId = userId,
-            ActionId = actionId,
-            Resource = "Patient",
-            Timestamp = DateTime.UtcNow
-        });
-
-        await _context.SaveChangesAsync();
-
-        return true;
+            Success = false,
+            Message = "Patient not found"
+        };
     }
+
+    // ✅ 2. Check if already inactive
+    if (patient.Status == PatientStatus.InActive)
+    {
+        return new DeactivatePatientDto
+        {
+            Success = false,
+            Message = "Patient is already inactive"
+        };
+    }
+
+    // ✅ 3. Check active medical records FIRST (VERY IMPORTANT)
+    var activeRecordExists = await _context.MedicalRecords
+        .AnyAsync(r => r.PatientId == patientId &&
+                       r.Status == MedicalRecordStatus.Active);
+
+    if (activeRecordExists)
+    {
+        return new DeactivatePatientDto
+        {
+            Success = false,
+            Message = "Cannot deactivate patient. Please close all active medical records first."
+        };
+    }
+
+    // ✅ 4. Safe to deactivate
+    patient.Status = PatientStatus.InActive;
+
+    await _context.SaveChangesAsync();
+
+    // ✅ 5. Audit log
+    var actionId = await _context.Actions
+        .Where(a => a.ActionName == "Delete")
+        .Select(a => a.ActionId)
+        .FirstAsync();
+
+    _context.AuditLogs.Add(new AuditLog
+    {
+        UserId = userId,
+        ActionId = actionId,
+        Resource = "Patient",
+        Timestamp = DateTime.UtcNow
+    });
+
+    await _context.SaveChangesAsync();
+
+    // ✅ 6. Success response
+    return new DeactivatePatientDto
+    {
+        Success = true,
+        Message = "Patient deactivated successfully"
+    };
+}
     public async Task<Patient?> GetPatientByIdAsync(int patientId, int userId)
     {
         var patient = await _context.Patients

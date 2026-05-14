@@ -12,7 +12,7 @@ namespace HealthNet.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Doctor,Lab Technician")]
+     [Authorize(Roles = $"{Roles.LabTechnician},{Roles.Admin},{Roles.Doctor}")]
     public class LaboratoryTestingController : ControllerBase
     {
         private readonly ILaboratoryTestingService _laboratoryTestingService;

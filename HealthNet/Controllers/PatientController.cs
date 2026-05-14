@@ -136,7 +136,7 @@ namespace HealthNet.Controllers
                 if (!response.Success)
                     return BadRequest(response.Message);
 
-                return Ok("Patient updated successfully.");
+                return Ok(new { message = "Patient updated successfully." });
             }
             catch (KeyNotFoundException)
             {

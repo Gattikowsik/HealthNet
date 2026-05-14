@@ -152,7 +152,7 @@ public class ComplianceRecordService : IComplianceRecordService
     public async Task UpdateComplianceRecordAsync(int complianceId, UpdateComplianceRecordDto request)
     {
         // ── STEP 1: Validate Result ────────────────────────────────
-        var allowedResults = new[] { "non compliant", "partially compliant", "pending review" };
+        var allowedResults = new[] { "compliant", "non compliant", "partially compliant", "pending review" };
         if (!allowedResults.Contains(request.Result.ToLower()))
             throw new ArgumentException(ComplianceHelper.InvalidResult);
 

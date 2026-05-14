@@ -31,7 +31,7 @@ namespace HealthNet.Controllers
         // </summary>
         // <param name="request"> LabReportRequest DTO for data transfer from client </param>
         [HttpPost]
-        [Authorize(Roles = Roles.LabTechnician)]
+         [Authorize(Roles = $"{Roles.LabTechnician},{Roles.Admin}")]
         [Consumes("multipart/form-data")] // Specify that the endpoint accepts multipart/form-data for file uploads
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]

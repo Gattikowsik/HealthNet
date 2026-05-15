@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/services/auth-service';
 import { CommonModule } from '@angular/common';
@@ -8,7 +8,8 @@ import { TokenService } from '../../../core/services/token-service';
 
 @Component({
   selector: 'app-header-component',
-  imports: [RouterLink, CommonModule, MatIconModule],
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive, CommonModule, MatIconModule],
   templateUrl: './header-component.html',
   styleUrl: './header-component.css',
 })

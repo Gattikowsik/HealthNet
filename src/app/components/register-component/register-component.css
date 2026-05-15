@@ -8,7 +8,7 @@
 @keyframes rg-blob { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-20px, 30px) scale(1.06); } }
 
 .auth-shell {
-  height: 100vh;
+  min-height: calc(100vh - var(--hn-nav-h, 60px));
   overflow: hidden;            /* page itself never scrolls */
   display: grid;
   grid-template-columns: 1fr 1.1fr;
@@ -28,7 +28,7 @@
   overflow: hidden;
   padding: 48px;
   display: flex;
-  height: 100vh;
+  min-height: calc(100vh - var(--hn-nav-h, 60px));
 }
 .auth-brand::before {
   content: '';
@@ -75,11 +75,11 @@
 .brand-foot a { color: rgba(255,255,255,.8); text-decoration: none; }
 .brand-foot a:hover { color: #fff; text-decoration: underline; }
 
-/* Form panel — tighter so the longer signup fits 100vh without scrolling */
+/* Form panel — tighter so the longer signup fits the viewport-minus-navbar */
 .auth-main {
   display: flex; align-items: center; justify-content: center;
   padding: 20px 24px;
-  height: 100vh;
+  min-height: calc(100vh - var(--hn-nav-h, 60px));
   overflow-y: auto;            /* short viewports get an internal scroll, never a page scroll */
 }
 .auth-card {
@@ -221,7 +221,7 @@
 @media (max-width: 960px) {
   .auth-shell { grid-template-columns: 1fr; }
   .auth-brand { display: none; }
-  .auth-main  { padding: 16px; height: 100vh; }
+  .auth-main  { padding: 16px; min-height: calc(100vh - var(--hn-nav-h, 60px)); }
   .auth-foot-mobile { display: block; }
 }
 @media (max-width: 560px) {

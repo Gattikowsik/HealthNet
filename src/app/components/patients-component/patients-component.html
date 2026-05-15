@@ -162,7 +162,9 @@
               <td>
                 <button class="row-btn btn-info" (click)="viewDetail(p.patientId)" title="View"><i class="ti ti-eye"></i></button>
                 <button class="row-btn btn-warning" *ngIf="canEdit" (click)="startEdit(p)" title="Edit"><i class="ti ti-edit"></i></button>
-                <button class="row-btn btn-danger" *ngIf="canEdit && p.status === 'Active'" (click)="deactivate(p.patientId)" title="Deactivate"><i class="ti ti-user-off"></i></button>
+                <button class="row-btn btn-danger" *ngIf="canEdit && p.status == '1'" (click)="deactivate(p)" title="Deactivate patient">
+                  <i class="ti ti-user-off"></i> 
+                </button>
               </td>
             </tr>
           </tbody>

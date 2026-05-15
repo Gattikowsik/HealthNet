@@ -31,30 +31,40 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-  if (!this.email || !this.password) {
-    this.errMsg = '*Email or Password cannot be empty.';
-    this.isSubmitting = false;
-    return;  // ← also add return here so it doesn't continue
-  }
+    if (this.isSubmitting) return;                       // guard double-clicks
 
-  const data: LoginRequest = {
-    email: this.email,
-    password: this.password
-  };
-
-  this.authService.login(data).subscribe({
-    next: () => {
-      this.isSubmitting = true;
-      this.errMsg = null;
-      this.redirectByRole();  // ← call this instead of router.navigate directly
-    },
-    error: (err: any) => {
-      this.isSubmitting = false;
-      this.errMsg = '*Invalid email or password';
-      console.error(err);
+    if (!this.email || !this.password) {
+      this.errMsg = '*Email or Password cannot be empty.';
+      return;
     }
-  });
-}
+
+    // Flip BEFORE the request fires so the button spinner is visible
+    // for the whole duration of the network call (was inside `next` —
+    // which meant the spinner only flashed after the response landed).
+    this.isSubmitting = true;
+    this.errMsg = null;
+
+    const data: LoginRequest = {
+      email: this.email,
+      password: this.password
+    };
+
+    this.authService.login(data).subscribe({
+      next: () => {
+        // Keep the spinner up during the route change so the user sees
+        // continuity instead of the button snapping back briefly.
+        this.errMsg = null;
+        this.redirectByRole();
+      },
+      error: (err: any) => {
+        this.isSubmitting = false;
+        this.errMsg = err?.status === 401
+          ? '*Invalid email or password.'
+          : '*Login failed. Please try again.';
+        console.error(err);
+      }
+    });
+  }
 
 private redirectByRole(): void {
   const role = this.authService.getUserRole();

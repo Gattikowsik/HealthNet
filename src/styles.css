@@ -10,8 +10,17 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif; color: #2d3748; }
 
-@media (min-width: 992px) { body { padding-top: 56px; } }
-@media (max-width: 991px) { body { padding-top: 54px; } }
+/* Push page content below the fixed top navbar so .page-header / .dh-header
+   don't get clipped behind it.
+     Desktop: .hn-nav        is 60px tall (≥992px)
+     Mobile:  .hn-nav-mobile is 56px tall (<992px)
+   Exposed as a CSS variable so pages that use 100vh can subtract it. */
+:root { --hn-nav-h: 60px; }
+@media (min-width: 992px) { body { padding-top: var(--hn-nav-h, 60px); } }
+@media (max-width: 991px) {
+  :root { --hn-nav-h: 56px; }
+  body { padding-top: 56px; }
+}
 
 /* ─── Design tokens ────────────────────────────────────────────── */
 :root {

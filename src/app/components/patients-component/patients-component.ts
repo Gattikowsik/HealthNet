@@ -93,6 +93,7 @@ export class PatientsComponent implements OnInit {
           }
           // Newest first
           this.patients = [...list].sort((a: any, b: any) => (b.patientId ?? 0) - (a.patientId ?? 0));
+          console.log('Loaded patients:', this.patients);
           this.isLoading = false;
         },
         error: (err) => {
@@ -172,11 +173,25 @@ export class PatientsComponent implements OnInit {
 
   closeDetail(): void { this.detailPatient = null; }
 
-  deactivate(id: number): void {
-    if (!confirm('Deactivate this patient?')) return;
-    this.patientService.deactivatePatient(id).subscribe({
-      next: () => { this.success = 'Patient deactivated.'; this.loadPatients(); setTimeout(() => this.success = '', 3000); },
-      error: (err) => { this.error = err.error || 'Failed to deactivate.'; }
+  deactivate(p: PatientResponse): void {
+    if (!confirm(`Deactivate patient "${p.name}" (#${p.patientId})?`)) return;
+    this.error = '';
+    this.patientService.deactivatePatient(p.patientId).subscribe({
+      next: (msg: string) => {
+        // Optimistic flip — the row's badge switches to Inactive before the
+        // refetch comes back. Surface the backend's plain-text message verbatim.
+        const idx = this.patients.findIndex(x => x.patientId === p.patientId);
+        if (idx >= 0) this.patients[idx] = { ...this.patients[idx], status: 'InActive' } as PatientResponse;
+        this.success = (msg && msg.trim()) ? msg : `Patient #${p.patientId} deactivated.`;
+        this.loadPatients();
+        setTimeout(() => this.success = '', 4000);
+      },
+      error: (err) => {
+        // Backend rejects with plain-text or { message } — handle both.
+        this.error = (typeof err.error === 'string' && err.error.trim())
+          ? err.error
+          : (err.error?.message || 'Failed to deactivate.');
+      }
     });
   }
 

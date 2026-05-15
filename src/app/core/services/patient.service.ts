@@ -28,10 +28,14 @@ export class PatientService {
   }
 
   updatePatient(id: number, dto: Partial<RegisterPatientRequest>): Observable<any> {
+    // PUT returns { message: '...' } JSON — keep default parse.
     return this.http.put<any>(`${this.apiUrl}/${id}`, dto);
   }
 
-  deactivatePatient(id: number): Observable<any> {
-    return this.http.patch<any>(`${this.apiUrl}/${id}/deactivate`, {});
+  deactivatePatient(id: number): Observable<string> {
+    // Backend returns `Ok(result.Message)` — plain text, not JSON.
+    // Without responseType:'text' Angular tries JSON.parse and throws,
+    // which makes successful deactivates look like failures in the UI.
+    return this.http.patch(`${this.apiUrl}/${id}/deactivate`, {}, { responseType: 'text' });
   }
 }

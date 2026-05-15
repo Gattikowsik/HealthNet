@@ -166,9 +166,21 @@ Route map highlights:
 - Role-aware menu — hard-coded `allNavItems` list, each entry declares `roles: string[]`.
   Filters on the JWT role at init. Role-coloured user badge at the top.
 
-### `<app-header-component>`
-- Top bar. **Home** link goes to `/` (public landing). On mobile it offers an off-canvas
-  drawer; on desktop a horizontal nav.
+### `<app-header-component>` (top navbar)
+- Fully restyled. **Home** link goes to `/` (public landing).
+- Custom HealthNet vocabulary (`.hn-nav`, `.hn-brand`, `.hn-links`, `.hn-actions`,
+  `.hn-profile`, `.hn-dropdown`) replaces the old plain Bootstrap navbar.
+- Gradient-blue brand mark + bold "HealthNet" wordmark on the left.
+- Each link has a Tabler icon + label, hover state, and an **active-route highlight**
+  via `routerLinkActive="active"`. Home uses `routerLinkActiveOptions: { exact: true }`
+  so it doesn't stay lit on every child route.
+- Profile pill: 32×32 gradient circle with a `ti-user-circle` icon (was the user's
+  first initial — switched to icon for clarity), caret, dropdown with Profile / Logout.
+- Bar height is **60px desktop / 56px mobile**. The height is exposed as the CSS
+  variable `--hn-nav-h` so every full-viewport page (`100vh`) can subtract it.
+- On mobile (<992px) the bar collapses to a burger + brand and the links live in an
+  off-canvas drawer.
+- `backdrop-filter: blur(10px)` for a frosted-glass effect over the page content.
 
 ---
 
@@ -182,9 +194,9 @@ Route map highlights:
 | Component | Route | What to say |
 |---|---|---|
 | `home-component` | `/` | Public landing page. Gradient hero + inline SVG hub-and-spoke illustration showing the six modules (Doctor / Lab / Patients / Outbreak / Compliance / Analytics). Stat strip, six feature cards, six role cards, CTA band, footer. Visible to everyone — replaces the old Dashboard navbar link. |
-| `login-component` | `/login` | Two-pane shell (gradient brand panel + form card). Locks to `100vh` so it never page-scrolls. JWT-based login that redirects per role. |
-| `register-component` | `/register` | Multi-field form with strong-password regex (8+ chars, upper, lower, digit, special) and 10-digit phone validation. Live password-match indicator. |
-| `forgot-password-component` | `/forgot-password` | Calls `PUT /User/forgotpassword`. Cross-field validator ensures new + confirm match. |
+| `login-component` | `/login` | Two-pane shell (gradient brand panel + form card). Uses `min-height: calc(100vh - var(--hn-nav-h, 60px))` so it fits exactly between the fixed navbar and the viewport bottom. JWT-based login that redirects per role. **`isSubmitting` is set before the request fires** (was inside the success callback, so the spinner only flashed after the response — fixed) and stays true through the role redirect for visual continuity. Double-click guard. |
+| `register-component` | `/register` | Multi-field form with strong-password regex (8+ chars, upper, lower, digit, special) and 10-digit phone validation. Live password-match indicator. Uses `min-height: calc(100vh - var(--hn-nav-h))` like login. |
+| `forgot-password-component` | `/forgot-password` | Calls `PUT /User/forgotpassword`. Cross-field validator ensures new + confirm match. Same `calc(100vh - var(--hn-nav-h))` layout. |
 | `about-component` | `/about` | Marketing-style public page: gradient hero, stat strip, pillar cards, alternating image+copy module rows. |
 | `compliance-component` | `/compliance` | Public posture page: hero, 3-step Audit→Record→Review flow, four result-chip pills, role permissions matrix, closing CTA. |
 | `unauthorized` | `/unauthorized` | Static 403 fallback used by `roleGuard`. |
@@ -209,7 +221,7 @@ Route map highlights:
 
 | Component | Route | What to say |
 |---|---|---|
-| `patients-component` | `/patients` | Patient registry with search, status filter, register form (10-digit phone validation), update flow, view-detail modal (`GET /{id}`), deactivate (`PATCH /{id}/deactivate`). Lab Tech can read it too. **Sorted newest first.** |
+| `patients-component` | `/patients` | Patient registry with search, status filter, register form (10-digit phone validation), update flow, view-detail modal (`GET /{id}`), and a **Deactivate** action under the row's Actions column. The deactivate flow uses `responseType: 'text'` on the service (backend now returns plain text from `Ok(result.Message)`), surfaces that text verbatim in the success bar, and **optimistically flips the row's status to `InActive` before the refetch lands**. Lab Tech can read the list too. **Sorted newest first.** |
 | `cases-component` | `/cases` | Cases CRUD. Symptom-report picker **filters out reports whose citizen already has a case** (backend rejects duplicates). Diagnosis validator blocks the literal string `"string"` and all-digit inputs (mirrors backend rule). PUT/DELETE use `responseType: 'text'`. Sorted newest first. |
 | `medical-records-component` | `/medical-records` | Add / View / Update / Deactivate. **Backend's `MedicalRecordGetDto` doesn't return RecordId**, but the Add/Update *response* does — so I cache the RecordId in a session-local Map keyed by `(date\|diagnosis\|treatmentPlan)` and stamp it onto matching rows in the list. After a deactivate, the row's badge optimistically reads `Deactive` until the page reloads. |
 | `all-symptom-reports-component` | `/all-symptom-reports` | Doctor / PHO / Admin / Researcher view of every citizen report. Status PATCH sends the **numeric enum value** (`Submitted=1, UnderReview=2, Reviewed=3, Closed=4`) under both `Status` (Pascal) and `status` (camel) for cross-config compatibility, and uses `responseType: 'text'` because the API returns plain text. Sorted newest first. Optimistic status badge update. |
@@ -255,8 +267,8 @@ Route map highlights:
 | Component | Route | What to say |
 |---|---|---|
 | `users-component` | `/users` | Admin user management. Filterable table (search, status=Active only, role), Active count pill, view modal, edit inline, soft-delete (with **optimistic row-flip** before the refetch comes back), **Reset Password modal** (admin-drives `/User/forgotpassword` for any user). Sorted newest first. |
-| `update-user-component` | `/update` | Legacy single-user update form; kept for back-compat. |
-| `delete-user-component` | `/delete` | Legacy soft-delete form. |
+| `update-user-component` | `/update` | Legacy single-user update form; kept for back-compat. Markup is Bootstrap; the CSS file applies HealthNet branding via `:host` overrides (gradient header, 18px-radius card, 10px-radius inputs with primary focus glow, gradient blue submit). |
+| `delete-user-component` | `/delete` | Legacy soft-delete form. Same `:host`-override pattern as Update User, but with a HealthNet **red** gradient header + danger button (`#791F1F → #A32D2D`) so the page reads as a destructive action. |
 | `profile-component` | `/profile` | Logged-in user's profile. Role-coloured gradient banner with initials avatar, three cards: About (key-value), Quick Actions (admin sees Update/Deactivate; everyone sees Reset Password + Analytics), Security & Access. Skeleton loaders. |
 
 ---
@@ -309,19 +321,24 @@ Mirror backend DTOs. Worth remembering:
    - PUT / DELETE `/Cases/{id}`
    - PUT / PATCH / DELETE `/Audit/{id}`
    - PUT / PATCH `/MedicalRecord/{id}*`
-   - **PUT / DELETE `/ComplianceRecord/{id}` (the most recent fix — Compliance Officer
-     Update + Delete were silently failing)**
+   - PUT / DELETE `/ComplianceRecord/{id}`
+   - **PATCH `/Patient/{id}/deactivate` (latest backend change — service now reads the
+     plain-text `result.Message` and the patient row optimistically flips to InActive
+     before the refetch returns).**
 
 4. **Error-message extraction.** Backend throws `ArgumentException` with specific
    strings (`"Duplicate case for this citizen."`, `"Diagnosis must not be a placeholder."`).
    An `extractError(err, fallback)` helper unwraps plain-text, `{message}`,
    ProblemDetails `{title, detail, errors}` so the red banner shows the real reason.
 
-5. **Optimistic UI updates.** Two examples:
-   - User deactivate → flip the local row's `status` to `false` **before** the refetch,
-     so count pills and the row badge update instantly.
-   - Medical-record deactivate → add the recordId to a `Set<number>` so the badge reads
-     `Deactive` immediately, even though the GET endpoint never tells us status.
+5. **Optimistic UI updates.** Three examples:
+   - **Patient** deactivate → flip the row's `status` to `'InActive'` **before** the
+     refetch, so the badge changes the instant the click registers (the actual backend
+     PATCH returns plain text we still surface verbatim in the success toast).
+   - **User** deactivate → same pattern in the admin Users table — flip `status: false`
+     locally, then refresh.
+   - **Medical-record** deactivate → add the recordId to a `Set<number>` so the badge
+     reads `Deactive` immediately, even though the GET endpoint never tells us status.
 
 6. **Session-local ID caching.** Medical-record GET doesn't return RecordId, but
    POST/PUT *responses* do — the component remembers each RecordId keyed by
@@ -355,6 +372,18 @@ Mirror backend DTOs. Worth remembering:
     see it). `/home` is the role-specific staff dashboard with role-relevant stats
     + tip card. `/home/admin` is the admin-only KPI page. Three distinct destinations,
     one consistent visual language.
+
+14. **`--hn-nav-h` CSS variable.** The fixed navbar is 60px on desktop / 56px on mobile.
+    Body padding-top and every `100vh` shell (login, register, forgot-password, the
+    legacy update/delete user pages) use `calc(100vh - var(--hn-nav-h, 60px))` so
+    nothing slides behind the navbar. Resize the navbar and every layout adjusts —
+    the value lives in one place in `src/styles.css`.
+
+15. **Loading-state timing matters.** Sign-in had a classic bug: the spinner flag
+    `isSubmitting = true` was set inside the success callback, so it only flashed
+    *after* the response landed. Moved it to before the HTTP call so the button
+    shows "Signing in…" for the actual duration of the request. Same pattern is
+    safe to copy for any other submit flow that feels jumpy.
 
 ---
 
@@ -396,9 +425,11 @@ Backend must be running on `http://localhost:5171` (see `src/environments/enviro
 
 - `/User/GetAll` is Admin-only, so non-admin roles can't populate the technician picker.
   Mitigated with `allowManualEntry` on `<app-id-picker>`.
-- `MedicalRecordGetDto` doesn't return `RecordId`; mitigated with the session-local
-  cache populated from Add/Update responses + a "Manage by Record ID" panel for
-  manual entry.
+- `MedicalRecordGetDto` **now ships `RecordId`** (latest backend pull added it). The
+  frontend's `mapRecord(r)` reads `r.recordId ?? r.RecordId ?? cached ?? 0`, so the
+  Record-ID column lights up automatically. The session-local cache + "Manage by
+  Record ID" panel are still in place as a defensive fallback in case the DTO ever
+  reverts.
 - `MedicalRecord` enforces "one active record per patient" — the UI surfaces this rule
   in an info banner on the Add form.
 - `SymptomsJson` column is small; payloads must be compacted before submit.

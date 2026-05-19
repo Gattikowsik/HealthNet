@@ -1,0 +1,12 @@
+using HealthNet.DTOs.ReportingAndAnalyticsDTO;
+
+namespace HealthNet.Services.ReportingAndAnalyticsServices;
+
+public interface IReportingAndAnalyticsService
+{
+    Task<OutbreakAnalyticsReportResponse> OutbreakAnalyticsReportService(OutbreakAnalyticsReportRequest request);
+    Task<PatientAnalyticsReportResponse> PatientAnalyticsReportService(PatientAnalyticsReportRequest request);
+    Task<ComplianceMetricsReportResponse> ComplianceMetricsReportService(ComplianceMetricsReportRequest request);
+    Task<EpidemiologicalAnalyticsReportResponse> EpidemiologicalReportService(EpidemiologicalAnalyticsReportRequest request);
+    Task<CaseAnalyticsReportResponse> CaseAnalyticsReportService(CaseAnalyticsReportRequest request);
+}
